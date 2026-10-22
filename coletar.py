@@ -4,7 +4,8 @@ Uso:
     RIOT_API_KEY=RGAPI-... python coletar.py
 
 Grava uma linha por jogador por dia em dados/historico.csv (rodar de novo no
-mesmo dia substitui a linha do dia) e gera site/dados.json para os gráficos.
+mesmo dia substitui a linha do dia), baixa as ranqueadas novas desde o início do
+campeonato para dados/partidas.json e gera os arquivos do site.
 """
 
 import csv
@@ -15,13 +16,18 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 RAIZ = Path(__file__).parent
 ARQ_JOGADORES = RAIZ / "jogadores.json"
 ARQ_HISTORICO = RAIZ / "dados" / "historico.csv"
+ARQ_PARTIDAS = RAIZ / "dados" / "partidas.json"
 ARQ_SITE = RAIZ / "site" / "dados.json"
+ARQ_SITE_PARTIDAS = RAIZ / "site" / "partidas.json"
+
+INICIO_CAMPEONATO = date(2026, 10, 2)
+FILA_SOLO = 420
 
 BRASILIA = timezone(timedelta(hours=-3))  # sem horário de verão desde 2019
 
@@ -111,6 +117,74 @@ def buscar_elo(jogador, chave, puuid=None):
     }
 
 
+def ler_partidas():
+    if not ARQ_PARTIDAS.exists():
+        return []
+    return json.loads(ARQ_PARTIDAS.read_text(encoding="utf-8"))
+
+
+def salvar_partidas(partidas):
+    ARQ_PARTIDAS.parent.mkdir(exist_ok=True)
+    partidas.sort(key=lambda p: (p["fim"], p["riot_id"].lower()))
+    ARQ_PARTIDAS.write_text(json.dumps(partidas, ensure_ascii=False, indent=0), encoding="utf-8")
+
+
+def resumir_partida(mid, info, puuid, riot_id):
+    eu = next((p for p in info["participants"] if p["puuid"] == puuid), None)
+    if eu is None:
+        return None
+    fim_ms = info.get("gameEndTimestamp") or info["gameStartTimestamp"] + info["gameDuration"] * 1000
+    return {
+        "id": mid,
+        "riot_id": riot_id,
+        "fim": datetime.fromtimestamp(fim_ms / 1000, BRASILIA).isoformat(timespec="minutes"),
+        "duracao": info["gameDuration"],
+        # Remake não vale PDL nem conta como vitória/derrota.
+        "remake": bool(eu.get("gameEndedInEarlySurrender") or info["gameDuration"] < 300),
+        "vitoria": eu["win"],
+        "campeao": eu["championName"],
+        "rota": eu.get("teamPosition") or eu.get("individualPosition") or "",
+        "abates": eu["kills"],
+        "mortes": eu["deaths"],
+        "assistencias": eu["assists"],
+        "cs": eu["totalMinionsKilled"] + eu["neutralMinionsKilled"],
+        "dano": eu["totalDamageDealtToChampions"],
+        "ouro": eu["goldEarned"],
+        "visao": eu["visionScore"],
+    }
+
+
+def atualizar_partidas(jogador, puuid, chave, partidas, pausa=0.0):
+    """Acrescenta em `partidas` as ranqueadas solo do jogador que ainda não estão lá."""
+    rid = jogador["riot_id"].lower()
+    conhecidas = {p["id"] for p in partidas if p["riot_id"].lower() == rid}
+    _, regiao = rotas(jogador)
+    base = f"https://{regiao}.api.riotgames.com/lol/match/v5/matches"
+    inicio_ts = int(datetime.combine(INICIO_CAMPEONATO, datetime.min.time(), BRASILIA).timestamp())
+
+    ids, pagina = [], 0
+    while True:
+        time.sleep(pausa)
+        lote = chamar_api(f"{base}/by-puuid/{puuid}/ids?queue={FILA_SOLO}&startTime={inicio_ts}"
+                          f"&start={pagina * 100}&count=100", chave) or []
+        ids += lote
+        if len(lote) < 100:
+            break
+        pagina += 1
+
+    novas = 0
+    for mid in ids:
+        if mid in conhecidas:
+            continue
+        time.sleep(pausa)
+        partida = chamar_api(f"{base}/{mid}", chave)
+        resumo = partida and resumir_partida(mid, partida["info"], puuid, jogador["riot_id"])
+        if resumo:
+            partidas.append(resumo)
+            novas += 1
+    return novas
+
+
 def ler_historico():
     if not ARQ_HISTORICO.exists():
         return []
@@ -138,6 +212,7 @@ def gerar_site(linhas, jogadores, agora):
             "nome": j["nome"],
             "riot_id": j["riot_id"],
             "funcao": j.get("funcao", ""),
+            "foto": j.get("foto", ""),
             "historico": [
                 {
                     "data": l["data"],
@@ -154,6 +229,7 @@ def gerar_site(linhas, jogadores, agora):
         })
     ARQ_SITE.parent.mkdir(exist_ok=True)
     ARQ_SITE.write_text(json.dumps(saida, ensure_ascii=False, indent=1), encoding="utf-8")
+    ARQ_SITE_PARTIDAS.write_text(json.dumps(ler_partidas(), ensure_ascii=False), encoding="utf-8")
 
 
 def main():
@@ -166,10 +242,12 @@ def main():
     hoje = agora.date().isoformat()
 
     linhas = ler_historico()
+    partidas = ler_partidas()
     falhas = 0
     for j in jogadores:
         try:
-            elo = buscar_elo(j, chave)
+            puuid = buscar_puuid(j, chave)
+            elo = buscar_elo(j, chave, puuid)
         except ChaveInvalida as e:
             sys.exit(str(e))
         except Exception as e:
@@ -177,13 +255,22 @@ def main():
             print(f"[erro] {j['nome']} ({j['riot_id']}): {e}")
             continue
 
+        try:
+            novas = atualizar_partidas(j, puuid, chave, partidas)
+        except ChaveInvalida as e:
+            sys.exit(str(e))
+        except Exception as e:
+            novas = 0
+            print(f"[erro] partidas de {j['nome']}: {e}")
+
         linhas = [l for l in linhas if not (l["data"] == hoje and l["riot_id"].lower() == j["riot_id"].lower())]
         linhas.append({"data": hoje, "nome": j["nome"], "riot_id": j["riot_id"],
                        **{k: ("" if v is None else v) for k, v in elo.items()}})
         desc = "sem rank" if elo["pontos"] is None else f"{elo['tier']} {elo['rank']} {elo['lp']} PDL"
-        print(f"[ok] {j['nome']}: {desc} ({elo['vitorias']}V {elo['derrotas']}D)")
+        print(f"[ok] {j['nome']}: {desc} ({elo['vitorias']}V {elo['derrotas']}D), {novas} partidas novas")
 
     salvar_historico(linhas)
+    salvar_partidas(partidas)
     gerar_site(linhas, jogadores, agora)
     print(f"{len(jogadores) - falhas}/{len(jogadores)} jogadores atualizados em {hoje}.")
     if falhas == len(jogadores):

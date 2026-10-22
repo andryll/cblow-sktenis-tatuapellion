@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKTenis Desempenho</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="estilo.css">
+<style>
+  .quem-filtro { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .quem-filtro button {
+    display: flex; align-items: center; gap: 6px;
+    font: inherit; font-size: 14px; color: var(--ink-2); background: transparent;
+    border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px 3px 3px; cursor: pointer;
+  }
+  .quem-filtro button.sem-foto { padding-left: 12px; }
+  .quem-filtro button:hover { background: var(--border); }
+  .quem-filtro button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-2); font-weight: 600; }
+  .quem-filtro img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+
+  .tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 16px; }
+  .tile .rot { color: var(--ink-2); font-size: 13px; }
+  .tile .val { font-size: 26px; font-weight: 600; margin-top: 2px; }
+  .tile .det { color: var(--muted); font-size: 13px; }
+
+  .grafico.baixo { height: 260px; }
+  section.card + section.card { margin-top: 16px; }
+  td.num, th.num { text-align: right; }
+  .camp { display: flex; align-items: center; gap: 8px; }
+  .camp img { width: 28px; height: 28px; border-radius: 6px; }
+  .mini { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 6px; }
+  .res { font-weight: 600; }
+  .res.v { color: var(--up); }
+  .res.d { color: var(--down); }
+  .muted { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="fotos/time.webp" alt="">
+    <div>
+      <h1>SKTenis Tatuapellion · Desempenho</h1>
+      <p class="sub" id="sub">Carregando…</p>
+    </div>
+  </header>
+  <nav class="abas">
+    <a href="./">Elo</a>
+    <a href="desempenho.html" aria-current="page">Desempenho</a>
+  </nav>
+
+  <div class="quem-filtro" id="filtro" role="group" aria-label="Atleta"></div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section class="card">
+    <h2>Vitórias e derrotas por dia</h2>
+    <div class="grafico baixo"><canvas id="grafico" aria-label="Vitórias e derrotas por dia"></canvas></div>
+  </section>
+
+  <section class="card" id="sec-atletas">
+    <h2>Atletas</h2>
+    <div class="tabela-wrap"><table id="tab-atletas"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>Campeões</h2>
+    <div class="tabela-wrap"><table id="tab-campeoes"></table></div>
+  </section>
+
+  <section class="card">
+    <h2>Últimas partidas</h2>
+    <div class="tabela-wrap"><table id="tab-partidas"></table></div>
+  </section>
+</main>
+
+<script>
+const ROTA = { TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid", BOTTOM: "ADC", UTILITY: "Suporte" };
+let jogadores = [], partidas = [], sel = null, grafico = null;
+let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
+
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const el = (tag, props = {}, ...filhos) => {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...filhos);
+  return e;
+};
+const fmt = (v, casas = 1) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+const pct = (v, t) => (t ? `${Math.round(100 * v / t)}%` : "—");
+
+function campeao(nome) {
+  const c = dd.porId[nome.toLowerCase()];
+  return { nome: c?.name || nome, icone: c && dd.versao ? `https://ddragon.leagueoflegends.com/cdn/${dd.versao}/img/champion/${c.id}.png` : null };
+}
+
+function somar(lista) {
+  const s = { n: lista.length, v: 0, k: 0, d: 0, a: 0, cs: 0, dano: 0, visao: 0, min: 0 };
+  for (const p of lista) {
+    s.v += p.vitoria ? 1 : 0; s.k += p.abates; s.d += p.mortes; s.a += p.assistencias;
+    s.cs += p.cs; s.dano += p.dano; s.visao += p.visao; s.min += p.duracao / 60;
+  }
+  s.kda = (s.k + s.a) / Math.max(1, s.d);
+  return s;
+}
+
+const kdaTexto = s => (s.n ? `${fmt(s.k / s.n)} / ${fmt(s.d / s.n)} / ${fmt(s.a / s.n)}` : "—");
+const doJogador = j => p => p.riot_id.toLowerCase() === j.riot_id.toLowerCase();
+
+function selecionadas() {
+  const validas = partidas.filter(p => !p.remake);
+  return sel ? validas.filter(doJogador(sel)) : validas;
+}
+
+function desenharFiltro() {
+  const box = document.getElementById("filtro");
+  box.replaceChildren();
+  const botao = (j) => {
+    const b = el("button", { type: "button" });
+    b.setAttribute("aria-pressed", String(sel === j));
+    if (j?.foto) b.append(el("img", { src: j.foto, alt: "" }));
+    else b.classList.add("sem-foto");
+    b.append(j ? j.nome : "Time todo");
+    b.addEventListener("click", () => { sel = j; render(); });
+    return b;
+  };
+  box.append(botao(null), ...jogadores.map(botao));
+}
+
+function desenharTiles(lista) {
+  const s = somar(lista);
+  const tile = (rot, val, det) => el("div", { className: "card tile" },
+    el("div", { className: "rot", textContent: rot }),
+    el("div", { className: "val", textContent: val }),
+    el("div", { className: "det", textContent: det }));
+  document.getElementById("tiles").replaceChildren(
+    tile("Partidas", String(s.n), "ranqueadas solo"),
+    tile("Winrate", pct(s.v, s.n), `${s.v}V ${s.n - s.v}D`),
+    tile("KDA", s.n ? fmt(s.kda, 2) : "—", kdaTexto(s)),
+    tile("CS por minuto", s.min ? fmt(s.cs / s.min) : "—", s.n ? `${Math.round(s.cs / s.n)} por partida` : ""),
+    tile("Dano por minuto", s.min ? fmt(s.dano / s.min, 0) : "—", "em campeões"),
+  );
+}
+
+function desenharGrafico(lista) {
+  if (grafico) grafico.destroy();
+  const dias = {};
+  const inicio = new Date("2026-10-02T12:00:00");
+  const fim = new Date();
+  fim.setHours(23, 59);
+  for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) dias[d.toISOString().slice(0, 10)] = { v: 0, d: 0 };
+  for (const p of lista) {
+    const dia = p.fim.slice(0, 10);
+    if (dias[dia]) dias[dia][p.vitoria ? "v" : "d"]++;
+  }
+  const chaves = Object.keys(dias);
+  const rot = chaves.map(c => `${c.slice(8, 10)}/${c.slice(5, 7)}`);
+  grafico = new Chart(document.getElementById("grafico"), {
+    type: "bar",
+    data: {
+      labels: rot,
+      datasets: [
+        { label: "Vitórias", data: chaves.map(c => dias[c].v), backgroundColor: css("--s1"), borderRadius: 4, borderSkipped: "start" },
+        { label: "Derrotas", data: chaves.map(c => -dias[c].d), backgroundColor: css("--s8"), borderRadius: 4, borderSkipped: "start" },
+      ],
+    },
+    options: {
+      maintainAspectRatio: false, animation: false,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { color: css("--muted"), maxRotation: 0, autoSkipPadding: 12 }, border: { color: css("--axis") } },
+        y: {
+          stacked: true, border: { display: false },
+          ticks: { color: css("--muted"), precision: 0, callback: v => Math.abs(v) },
+          grid: { color: c => (c.tick.value === 0 ? css("--axis") : css("--grid")) },
+        },
+      },
+      plugins: {
+        legend: { position: "top", align: "start", labels: { color: css("--ink-2"), boxWidth: 12, boxHeight: 12 } },
+        tooltip: {
+          backgroundColor: css("--surface"), borderColor: css("--border"), borderWidth: 1,
+          titleColor: css("--ink-2"), bodyColor: css("--ink"), padding: 10,
+          callbacks: { label: i => ` ${Math.abs(i.raw)} ${i.dataset.label.toLowerCase()}` },
+        },
+      },
+    },
+  });
+}
+
+function tabela(id, cabecalho, linhas) {
+  const t = document.getElementById(id);
+  const thead = el("thead", {}, el("tr", {}, ...cabecalho.map(([txt, num]) => el("th", { className: num ? "num" : "", textContent: txt }))));
+  const tbody = el("tbody");
+  for (const cels of linhas) {
+    tbody.append(el("tr", {}, ...cels.map((c, i) => {
+      const td = el("td", { className: cabecalho[i][1] ? "num" : "" });
+      if (c instanceof Node) td.append(c); else td.textContent = c;
+      return td;
+    })));
+  }
+  if (!linhas.length) tbody.append(el("tr", {}, el("td", { colSpan: cabecalho.length, className: "muted", textContent: "Nenhuma partida ainda." })));
+  t.replaceChildren(thead, tbody);
+}
+
+function celCampeao(nome) {
+  const c = campeao(nome);
+  const box = el("span", { className: "camp" });
+  if (c.icone) box.append(el("img", { src: c.icone, alt: "", loading: "lazy" }));
+  box.append(c.nome);
+  return box;
+}
+
+function celJogador(j) {
+  const box = el("span");
+  if (j.foto) box.append(el("img", { className: "mini", src: j.foto, alt: "" }));
+  box.append(j.nome);
+  return box;
+}
+
+function desenharAtletas() {
+  const sec = document.getElementById("sec-atletas");
+  sec.hidden = !!sel;
+  if (sel) return;
+  const validas = partidas.filter(p => !p.remake);
+  const linhas = jogadores.map(j => {
+    const lista = validas.filter(doJogador(j));
+    const s = somar(lista);
+    const cont = {};
+    lista.forEach(p => { cont[p.campeao] = (cont[p.campeao] || 0) + 1; });
+    const top = Object.entries(cont).sort((a, b) => b[1] - a[1])[0];
+    return { s, cels: [celJogador(j), String(s.n), s.n ? `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)` : "—",
+      s.n ? fmt(s.kda, 2) : "—", s.min ? fmt(s.cs / s.min) : "—", s.min ? fmt(s.dano / s.min, 0) : "—",
+      top ? celCampeao(top[0]) : "—"] };
+  }).sort((a, b) => b.s.n - a.s.n).map(x => x.cels);
+  tabela("tab-atletas", [["Atleta"], ["Partidas", 1], ["Winrate", 1], ["KDA", 1], ["CS/min", 1], ["Dano/min", 1], ["Mais jogado"]], linhas);
+}
+
+function desenharCampeoes(lista) {
+  const grupos = {};
+  lista.forEach(p => (grupos[p.campeao] ||= []).push(p));
+  const linhas = Object.entries(grupos)
+    .map(([nome, ps]) => ({ nome, s: somar(ps), quem: [...new Set(ps.map(p => p.riot_id.toLowerCase()))] }))
+    .sort((a, b) => b.s.n - a.s.n || b.s.v - a.s.v)
+    .map(({ nome, s, quem }) => {
+      const cels = [celCampeao(nome), String(s.n), `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)`,
+        `${fmt(s.kda, 2)}`, kdaTexto(s), fmt(s.cs / s.min), fmt(s.dano / s.min, 0)];
+      if (!sel) cels.push(jogadores.filter(j => quem.includes(j.riot_id.toLowerCase())).map(j => j.nome).join(", "));
+      return cels;
+    });
+  const cab = [["Campeão"], ["Partidas", 1], ["Winrate", 1], ["KDA", 1], ["Abates / Mortes / Assist.", 1], ["CS/min", 1], ["Dano/min", 1]];
+  if (!sel) cab.push(["Quem jogou"]);
+  tabela("tab-campeoes", cab, linhas);
+}
+
+function desenharPartidas(lista) {
+  const porRid = Object.fromEntries(jogadores.map(j => [j.riot_id.toLowerCase(), j]));
+  const linhas = [...lista].sort((a, b) => b.fim.localeCompare(a.fim)).slice(0, 25).map(p => {
+    const [d, h] = p.fim.split("T");
+    const cels = [`${d.slice(8, 10)}/${d.slice(5, 7)} ${h.slice(0, 5)}`];
+    if (!sel) cels.push(celJogador(porRid[p.riot_id.toLowerCase()] || { nome: p.riot_id }));
+    cels.push(celCampeao(p.campeao), ROTA[p.rota] || "—",
+      el("span", { className: `res ${p.vitoria ? "v" : "d"}`, textContent: p.vitoria ? "Vitória" : "Derrota" }),
+      `${p.abates} / ${p.mortes} / ${p.assistencias}`, String(p.cs), `${Math.floor(p.duracao / 60)}min`);
+    return cels;
+  });
+  const cab = [["Quando"]];
+  if (!sel) cab.push(["Atleta"]);
+  cab.push(["Campeão"], ["Rota"], ["Resultado"], ["A / M / As", 1], ["CS", 1], ["Duração", 1]);
+  tabela("tab-partidas", cab, linhas);
+}
+
+function render() {
+  const lista = selecionadas();
+  desenharFiltro();
+  desenharTiles(lista);
+  desenharGrafico(lista);
+  desenharAtletas();
+  desenharCampeoes(lista);
+  desenharPartidas(lista);
+}
+
+async function dataDragon() {
+  try {
+    const versoes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json").then(r => r.json());
+    const dados = await fetch(`https://ddragon.leagueoflegends.com/cdn/${versoes[0]}/data/pt_BR/champion.json`).then(r => r.json());
+    dd = { versao: versoes[0], porId: Object.fromEntries(Object.values(dados.data).map(c => [c.id.toLowerCase(), c])) };
+  } catch { /* sem ícones: mostra só os nomes */ }
+}
+
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => jogadores.length && render());
+
+Promise.all([
+  fetch("dados.json", { cache: "no-store" }).then(r => r.json()),
+  fetch("partidas.json", { cache: "no-store" }).then(r => (r.ok ? r.json() : [])),
+  dataDragon(),
+]).then(([d, p]) => {
+  jogadores = d.jogadores;
+  partidas = p;
+  const quando = new Date(d.atualizado_em);
+  document.getElementById("sub").textContent =
+    `Ranqueadas solo desde 02/10 · atualizado em ${quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`;
+  render();
+}).catch(() => {
+  document.getElementById("sub").textContent = "Ainda não há dados.";
+});
+</script>
+</body>
+</html>
