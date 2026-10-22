@@ -1,0 +1,117 @@
+{
+ "atualizado_em": "2026-10-22T09:59-03:00",
+ "jogadores": [
+  {
+   "nome": "Ceyf",
+   "riot_id": "SKTT Ceyf#CBLOW",
+   "funcao": "",
+   "historico": [
+    {
+     "data": "2026-10-22",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 76,
+     "vitorias": 91,
+     "derrotas": 118,
+     "pontos": 176
+    }
+   ]
+  },
+  {
+   "nome": "KarlinRox",
+   "riot_id": "SKTT KarlinRox#cblow",
+   "funcao": "",
+   "historico": [
+    {
+     "data": "2026-10-22",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 0,
+     "vitorias": 98,
+     "derrotas": 137,
+     "pontos": 0
+    }
+   ]
+  },
+  {
+   "nome": "drytski",
+   "riot_id": "drytski#uwu",
+   "funcao": "",
+   "historico": [
+    {
+     "data": "2026-10-22",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 20,
+     "vitorias": 68,
+     "derrotas": 109,
+     "pontos": 20
+    }
+   ]
+  },
+  {
+   "nome": "SK4RAVELHO",
+   "riot_id": "SK4RAVELHO#BR1",
+   "funcao": "",
+   "historico": [
+    {
+     "data": "2026-10-22",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 1,
+     "vitorias": 108,
+     "derrotas": 120,
+     "pontos": 401
+    }
+   ]
+  },
+  {
+   "nome": "PastorDeCalcinha",
+   "riot_id": "PastorDeCalcinha#ZYRAO",
+   "funcao": "",
+   "historico": [
+    {
+     "data": "2026-10-22",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 98,
+     "vitorias": 102,
+     "derrotas": 126,
+     "pontos": 198
+    }
+   ]
+  },
+  {
+   "nome": "SrTaveira",
+   "riot_id": "SrTaveira#br1",
+   "funcao": "",
+   "historico": [
+    {
+     "data": "2026-10-22",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 53,
+     "vitorias": 130,
+     "derrotas": 150,
+     "pontos": 553
+    }
+   ]
+  },
+  {
+   "nome": "ExC4mBau",
+   "riot_id": "SKT ExC4mBau#CBLOW",
+   "funcao": "",
+   "historico": [
+    {
+     "data": "2026-10-22",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 21,
+     "vitorias": 336,
+     "derrotas": 444,
+     "pontos": 221
+    }
+   ]
+  }
+ ]
+}
