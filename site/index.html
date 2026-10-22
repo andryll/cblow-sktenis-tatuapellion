@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CBLOW SoloQ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --up: #006300;
+    --down: #d03b3b;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+    --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7;
+      --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10); --up: #0ca30c;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+      --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10); --up: #0ca30c;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-size: 24px; margin: 0 0 2px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .sub { color: var(--ink-2); margin: 0 0 20px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 18px;
+  }
+
+  .filtros { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filtros button {
+    font: inherit; font-size: 14px; color: var(--ink-2); background: transparent;
+    border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px; cursor: pointer;
+  }
+  .filtros button:hover { background: var(--border); }
+  .filtros button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-2); font-weight: 600; }
+
+  .grafico { position: relative; height: 420px; }
+  .nota { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+
+  .jogadores {
+    display: grid; gap: 12px; margin-top: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+  .jog .topo { display: flex; align-items: center; gap: 8px; }
+  .jog .chave { width: 16px; height: 3px; border-radius: 2px; flex: none; }
+  .jog .nome { font-weight: 600; }
+  .jog .funcao { color: var(--muted); font-size: 13px; margin-left: auto; }
+  .jog .rid { color: var(--muted); font-size: 13px; margin: 2px 0 10px; word-break: break-all; }
+  .jog .elo { font-size: 22px; font-weight: 600; }
+  .jog .pdl { color: var(--ink-2); }
+  .jog dl { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin: 12px 0 0; font-size: 14px; }
+  .jog dt { color: var(--ink-2); }
+  .jog dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .up { color: var(--up); }
+  .down { color: var(--down); }
+
+  details { margin-top: 16px; }
+  summary { cursor: pointer; font-weight: 600; }
+  .tabela-wrap { overflow-x: auto; margin-top: 12px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th { color: var(--ink-2); font-weight: 600; }
+  .vazio { color: var(--ink-2); }
+  @media (max-width: 600px) { .grafico { height: 320px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>CBLOW · SoloQ</h1>
+  <p class="sub" id="atualizado">Carregando…</p>
+
+  <div class="filtros" role="group" aria-label="Período">
+    <button data-dias="7">7 dias</button>
+    <button data-dias="30" aria-pressed="true">30 dias</button>
+    <button data-dias="90">90 dias</button>
+    <button data-dias="0">Tudo</button>
+  </div>
+
+  <section class="card">
+    <h2>Evolução do elo</h2>
+    <div class="grafico"><canvas id="grafico" aria-label="Gráfico de elo por dia"></canvas></div>
+    <p class="nota">Cada linha de grade é uma divisão; as mais fortes separam os tiers. Clique num nome da legenda para esconder ou mostrar.</p>
+  </section>
+
+  <section class="jogadores" id="jogadores"></section>
+
+  <details class="card">
+    <summary>Ver tabela</summary>
+    <div class="tabela-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Jogador</th><th>Elo</th><th>PDL</th><th>V</th><th>D</th></tr></thead>
+        <tbody id="tabela"></tbody>
+      </table>
+    </div>
+  </details>
+</main>
+
+<script>
+const TIERS = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND"];
+const NOME_TIER = {
+  IRON: "Ferro", BRONZE: "Bronze", SILVER: "Prata", GOLD: "Ouro", PLATINUM: "Platina",
+  EMERALD: "Esmeralda", DIAMOND: "Diamante", MASTER: "Mestre", GRANDMASTER: "Grão-Mestre",
+  CHALLENGER: "Desafiante", UNRANKED: "Sem rank",
+};
+const DIVS = ["IV", "III", "II", "I"];
+const APEX = TIERS.length * 400;
+
+let dados = null;
+let dias = 30;
+let grafico = null;
+
+const css = nome => getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
+const corJogador = i => css(`--s${(i % 8) + 1}`);
+
+function eloTexto(h) {
+  if (!h || h.pontos == null) return "Sem rank";
+  return h.rank && !["MASTER", "GRANDMASTER", "CHALLENGER"].includes(h.tier)
+    ? `${NOME_TIER[h.tier]} ${h.rank}` : NOME_TIER[h.tier];
+}
+
+function rotuloEixo(v) {
+  if (v % 100 !== 0 || v < 0) return "";
+  if (v >= APEX) return v === APEX ? "Mestre" : `Mestre +${v - APEX}`;
+  return `${NOME_TIER[TIERS[Math.floor(v / 400)]]} ${DIVS[(v % 400) / 100]}`;
+}
+
+function dataCurta(iso) {
+  const [, m, d] = iso.split("-");
+  return `${d}/${m}`;
+}
+
+function datasNoPeriodo() {
+  const todas = [...new Set(dados.jogadores.flatMap(j => j.historico.map(h => h.data)))].sort();
+  if (!dias || !todas.length) return todas;
+  const fim = new Date(todas[todas.length - 1] + "T12:00:00");
+  fim.setDate(fim.getDate() - dias + 1);
+  const inicio = fim.toISOString().slice(0, 10);
+  return todas.filter(d => d >= inicio);
+}
+
+// Linha vertical que acompanha o ponteiro na data mais próxima.
+const mira = {
+  id: "mira",
+  afterDatasetsDraw(chart) {
+    const ativo = chart.tooltip?.getActiveElements?.() || [];
+    if (!ativo.length) return;
+    const x = ativo[0].element.x;
+    const { top, bottom } = chart.chartArea;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.strokeStyle = css("--axis");
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+    ctx.restore();
+  },
+};
+
+function desenharGrafico(datas) {
+  const escondidos = new Set();
+  if (grafico) {
+    grafico.data.datasets.forEach((ds, i) => { if (!grafico.isDatasetVisible(i)) escondidos.add(ds.label); });
+    grafico.destroy();
+  }
+
+  const datasets = dados.jogadores.map((j, i) => {
+    const porData = Object.fromEntries(j.historico.map(h => [h.data, h]));
+    return {
+      label: j.nome,
+      data: datas.map(d => porData[d]?.pontos ?? null),
+      registros: datas.map(d => porData[d] || null),
+      borderColor: corJogador(i),
+      backgroundColor: corJogador(i),
+      borderWidth: 2,
+      pointRadius: datas.length > 30 ? 0 : 4,
+      pointHoverRadius: 5,
+      pointBorderColor: css("--surface"),
+      pointBorderWidth: 2,
+      tension: 0.2,
+      hidden: escondidos.has(j.nome),
+    };
+  });
+
+  const valores = datasets.flatMap(d => d.data).filter(v => v != null);
+  const min = valores.length ? Math.max(0, Math.floor(Math.min(...valores) / 100) * 100 - 100) : 0;
+  const max = valores.length ? Math.ceil(Math.max(...valores) / 100) * 100 + 100 : 800;
+
+  grafico = new Chart(document.getElementById("grafico"), {
+    type: "line",
+    data: { labels: datas.map(dataCurta), datasets },
+    plugins: [mira],
+    options: {
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        y: {
+          min, max,
+          ticks: { stepSize: 100, callback: rotuloEixo, color: css("--muted"), font: { size: 12 } },
+          grid: {
+            color: c => (c.tick.value % 400 === 0 ? css("--axis") : css("--grid")),
+            lineWidth: c => (c.tick.value % 400 === 0 ? 1.5 : 1),
+          },
+          border: { display: false },
+        },
+        x: {
+          ticks: { color: css("--muted"), font: { size: 12 }, maxRotation: 0, autoSkipPadding: 16 },
+          grid: { display: false },
+          border: { color: css("--axis") },
+        },
+      },
+      plugins: {
+        legend: {
+          position: "top", align: "start",
+          labels: {
+            usePointStyle: true, pointStyle: "line", color: css("--ink-2"), boxWidth: 16, padding: 14,
+            generateLabels: chart => Chart.defaults.plugins.legend.labels.generateLabels(chart).map(l => ({
+              ...l, strokeStyle: chart.data.datasets[l.datasetIndex].borderColor, lineWidth: 3,
+            })),
+          },
+        },
+        tooltip: {
+          backgroundColor: css("--surface"),
+          borderColor: css("--border"), borderWidth: 1,
+          titleColor: css("--ink-2"), bodyColor: css("--ink"),
+          padding: 10, boxWidth: 12, boxHeight: 2, usePointStyle: false,
+          itemSort: (a, b) => (b.raw ?? -1) - (a.raw ?? -1),
+          filter: item => item.raw != null,
+          callbacks: {
+            label: item => {
+              const r = item.dataset.registros[item.dataIndex];
+              return ` ${eloTexto(r)} · ${r.lp} PDL — ${item.dataset.label}`;
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+function delta(valor) {
+  const el = document.createElement("dd");
+  if (valor == null) { el.textContent = "—"; return el; }
+  if (valor === 0) { el.textContent = "0"; return el; }
+  el.className = valor > 0 ? "up" : "down";
+  el.textContent = `${valor > 0 ? "▲ +" : "▼ "}${valor} PDL`;
+  return el;
+}
+
+function linha(dl, rotulo, dd) {
+  const dt = document.createElement("dt");
+  dt.textContent = rotulo;
+  if (typeof dd === "string") { const x = document.createElement("dd"); x.textContent = dd; dd = x; }
+  dl.append(dt, dd);
+}
+
+function desenharCards(datas) {
+  const box = document.getElementById("jogadores");
+  box.replaceChildren();
+  const inicio = datas[0];
+
+  dados.jogadores.forEach((j, i) => {
+    const hist = j.historico;
+    const atual = hist[hist.length - 1];
+    const ontem = hist[hist.length - 2];
+    const noPeriodo = hist.filter(h => h.data >= inicio);
+    const primeiro = noPeriodo[0];
+
+    const card = document.createElement("article");
+    card.className = "card jog";
+
+    const topo = document.createElement("div");
+    topo.className = "topo";
+    const chave = document.createElement("span");
+    chave.className = "chave";
+    chave.style.background = corJogador(i);
+    const nome = document.createElement("span");
+    nome.className = "nome";
+    nome.textContent = j.nome;
+    const funcao = document.createElement("span");
+    funcao.className = "funcao";
+    funcao.textContent = j.funcao || "";
+    topo.append(chave, nome, funcao);
+
+    const rid = document.createElement("div");
+    rid.className = "rid";
+    rid.textContent = j.riot_id;
+
+    const elo = document.createElement("div");
+    elo.className = "elo";
+    elo.textContent = eloTexto(atual);
+    if (atual && atual.pontos != null) {
+      const pdl = document.createElement("span");
+      pdl.className = "pdl";
+      pdl.textContent = ` ${atual.lp} PDL`;
+      elo.append(pdl);
+    }
+
+    const dl = document.createElement("dl");
+    const dif = (a, b) => (a?.pontos != null && b?.pontos != null ? a.pontos - b.pontos : null);
+    linha(dl, "Desde a última coleta", delta(dif(atual, ontem)));
+    linha(dl, "No período", delta(dif(atual, primeiro)));
+    const jogos = (atual && primeiro) ? (atual.vitorias + atual.derrotas) - (primeiro.vitorias + primeiro.derrotas) : null;
+    linha(dl, "Partidas no período", jogos == null ? "—" : String(jogos));
+    const total = atual ? atual.vitorias + atual.derrotas : 0;
+    linha(dl, "Winrate na season", total ? `${Math.round(100 * atual.vitorias / total)}% (${atual.vitorias}V ${atual.derrotas}D)` : "—");
+
+    card.append(topo, rid, elo, dl);
+    box.append(card);
+  });
+}
+
+function desenharTabela(datas) {
+  const corpo = document.getElementById("tabela");
+  corpo.replaceChildren();
+  const set = new Set(datas);
+  const linhas = dados.jogadores.flatMap(j => j.historico.filter(h => set.has(h.data)).map(h => ({ j, h })))
+    .sort((a, b) => b.h.data.localeCompare(a.h.data) || a.j.nome.localeCompare(b.j.nome));
+  for (const { j, h } of linhas) {
+    const tr = document.createElement("tr");
+    for (const v of [dataCurta(h.data), j.nome, eloTexto(h), h.pontos == null ? "—" : h.lp, h.vitorias, h.derrotas]) {
+      const td = document.createElement("td");
+      td.textContent = v;
+      tr.append(td);
+    }
+    corpo.append(tr);
+  }
+}
+
+function render() {
+  const datas = datasNoPeriodo();
+  desenharGrafico(datas);
+  desenharCards(datas);
+  desenharTabela(datas);
+}
+
+document.querySelectorAll(".filtros button").forEach(b => b.addEventListener("click", () => {
+  dias = Number(b.dataset.dias);
+  document.querySelectorAll(".filtros button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  render();
+}));
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => dados && render());
+
+fetch("dados.json", { cache: "no-store" })
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(d => {
+    dados = d;
+    const quando = new Date(d.atualizado_em);
+    document.getElementById("atualizado").textContent =
+      `${d.jogadores.length} jogadores · atualizado em ${quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`;
+    render();
+  })
+  .catch(() => {
+    const p = document.getElementById("atualizado");
+    p.textContent = "Ainda não há dados. A primeira coleta roda hoje às 22:30.";
+    p.className = "sub vazio";
+  });
+</script>
+</body>
+</html>
