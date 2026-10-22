@@ -1,5 +1,5 @@
 {
- "atualizado_em": "2026-10-22T09:59-03:00",
+ "atualizado_em": "2026-10-22T10:14-03:00",
  "jogadores": [
   {
    "nome": "Ceyf",
@@ -7,13 +7,214 @@
    "funcao": "",
    "historico": [
     {
+     "data": "2026-10-02",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 4,
+     "vitorias": 85,
+     "derrotas": 100,
+     "pontos": 404,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-03",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 4,
+     "vitorias": 85,
+     "derrotas": 100,
+     "pontos": 404,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-04",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 84,
+     "vitorias": 85,
+     "derrotas": 101,
+     "pontos": 384,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-05",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 84,
+     "vitorias": 85,
+     "derrotas": 101,
+     "pontos": 384,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-06",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 64,
+     "vitorias": 85,
+     "derrotas": 102,
+     "pontos": 364,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-07",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 64,
+     "vitorias": 85,
+     "derrotas": 102,
+     "pontos": 364,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-08",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 64,
+     "vitorias": 85,
+     "derrotas": 102,
+     "pontos": 364,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-09",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 64,
+     "vitorias": 85,
+     "derrotas": 102,
+     "pontos": 364,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-10",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 44,
+     "vitorias": 85,
+     "derrotas": 103,
+     "pontos": 344,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-11",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 4,
+     "vitorias": 85,
+     "derrotas": 105,
+     "pontos": 304,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-12",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 26,
+     "vitorias": 86,
+     "derrotas": 110,
+     "pontos": 226,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-13",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 26,
+     "vitorias": 86,
+     "derrotas": 110,
+     "pontos": 226,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-14",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 66,
+     "vitorias": 86,
+     "derrotas": 113,
+     "pontos": 166,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-15",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 90,
+     "vitorias": 88,
+     "derrotas": 114,
+     "pontos": 190,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-16",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 90,
+     "vitorias": 88,
+     "derrotas": 114,
+     "pontos": 190,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-17",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 72,
+     "vitorias": 89,
+     "derrotas": 116,
+     "pontos": 172,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-18",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 74,
+     "vitorias": 90,
+     "derrotas": 117,
+     "pontos": 174,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-19",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 74,
+     "vitorias": 90,
+     "derrotas": 117,
+     "pontos": 174,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-20",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 76,
+     "vitorias": 91,
+     "derrotas": 118,
+     "pontos": 176,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-21",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 76,
+     "vitorias": 91,
+     "derrotas": 118,
+     "pontos": 176,
+     "estimado": true
+    },
+    {
      "data": "2026-10-22",
      "tier": "IRON",
      "rank": "III",
      "lp": 76,
      "vitorias": 91,
      "derrotas": 118,
-     "pontos": 176
+     "pontos": 176,
+     "estimado": false
     }
    ]
   },
@@ -23,13 +224,214 @@
    "funcao": "",
    "historico": [
     {
+     "data": "2026-10-02",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 54,
+     "vitorias": 73,
+     "derrotas": 97,
+     "pontos": 254,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-03",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 14,
+     "vitorias": 73,
+     "derrotas": 99,
+     "pontos": 214,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-04",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 8,
+     "vitorias": 80,
+     "derrotas": 102,
+     "pontos": 308,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-05",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 30,
+     "vitorias": 81,
+     "derrotas": 102,
+     "pontos": 330,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-06",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 30,
+     "vitorias": 81,
+     "derrotas": 102,
+     "pontos": 330,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-07",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 30,
+     "vitorias": 81,
+     "derrotas": 102,
+     "pontos": 330,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-08",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 74,
+     "vitorias": 83,
+     "derrotas": 102,
+     "pontos": 374,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-09",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 56,
+     "vitorias": 84,
+     "derrotas": 104,
+     "pontos": 356,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-10",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 58,
+     "vitorias": 85,
+     "derrotas": 110,
+     "pontos": 258,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-11",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 18,
+     "vitorias": 85,
+     "derrotas": 112,
+     "pontos": 218,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-12",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 22,
+     "vitorias": 87,
+     "derrotas": 114,
+     "pontos": 222,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-13",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 24,
+     "vitorias": 88,
+     "derrotas": 115,
+     "pontos": 224,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-14",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 28,
+     "vitorias": 90,
+     "derrotas": 117,
+     "pontos": 228,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-15",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 12,
+     "vitorias": 92,
+     "derrotas": 120,
+     "pontos": 212,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-16",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 94,
+     "vitorias": 93,
+     "derrotas": 122,
+     "pontos": 194,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-17",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 78,
+     "vitorias": 95,
+     "derrotas": 130,
+     "pontos": 78,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-18",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 0,
+     "vitorias": 97,
+     "derrotas": 136,
+     "pontos": 0,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-19",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 0,
+     "vitorias": 97,
+     "derrotas": 136,
+     "pontos": 0,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-20",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 0,
+     "vitorias": 98,
+     "derrotas": 137,
+     "pontos": 0,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-21",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 0,
+     "vitorias": 98,
+     "derrotas": 137,
+     "pontos": 0,
+     "estimado": true
+    },
+    {
      "data": "2026-10-22",
      "tier": "IRON",
      "rank": "IV",
      "lp": 0,
      "vitorias": 98,
      "derrotas": 137,
-     "pontos": 0
+     "pontos": 0,
+     "estimado": false
     }
    ]
   },
@@ -39,13 +441,214 @@
    "funcao": "",
    "historico": [
     {
+     "data": "2026-10-02",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 84,
+     "vitorias": 49,
+     "derrotas": 65,
+     "pontos": 484,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-03",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 4,
+     "vitorias": 49,
+     "derrotas": 69,
+     "pontos": 404,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-04",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 30,
+     "vitorias": 52,
+     "derrotas": 71,
+     "pontos": 430,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-05",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 74,
+     "vitorias": 54,
+     "derrotas": 71,
+     "pontos": 474,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-06",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 54,
+     "vitorias": 54,
+     "derrotas": 72,
+     "pontos": 454,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-07",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 38,
+     "vitorias": 56,
+     "derrotas": 75,
+     "pontos": 438,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-08",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 40,
+     "vitorias": 57,
+     "derrotas": 76,
+     "pontos": 440,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-09",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 60,
+     "vitorias": 57,
+     "derrotas": 80,
+     "pontos": 360,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-10",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 28,
+     "vitorias": 61,
+     "derrotas": 81,
+     "pontos": 428,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-11",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 70,
+     "vitorias": 62,
+     "derrotas": 85,
+     "pontos": 370,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-12",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 72,
+     "vitorias": 63,
+     "derrotas": 86,
+     "pontos": 372,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-13",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 32,
+     "vitorias": 63,
+     "derrotas": 88,
+     "pontos": 332,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-14",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 92,
+     "vitorias": 63,
+     "derrotas": 90,
+     "pontos": 292,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-15",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 34,
+     "vitorias": 64,
+     "derrotas": 94,
+     "pontos": 234,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-16",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 94,
+     "vitorias": 64,
+     "derrotas": 96,
+     "pontos": 194,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-17",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 18,
+     "vitorias": 66,
+     "derrotas": 102,
+     "pontos": 118,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-18",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 78,
+     "vitorias": 66,
+     "derrotas": 104,
+     "pontos": 78,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-19",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 78,
+     "vitorias": 66,
+     "derrotas": 104,
+     "pontos": 78,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-20",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 58,
+     "vitorias": 66,
+     "derrotas": 105,
+     "pontos": 58,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-21",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 20,
+     "vitorias": 68,
+     "derrotas": 109,
+     "pontos": 20,
+     "estimado": true
+    },
+    {
      "data": "2026-10-22",
      "tier": "IRON",
      "rank": "IV",
      "lp": 20,
      "vitorias": 68,
      "derrotas": 109,
-     "pontos": 20
+     "pontos": 20,
+     "estimado": false
     }
    ]
   },
@@ -55,13 +658,214 @@
    "funcao": "",
    "historico": [
     {
+     "data": "2026-10-02",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 5,
+     "vitorias": 90,
+     "derrotas": 105,
+     "pontos": 305,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-03",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 5,
+     "vitorias": 90,
+     "derrotas": 105,
+     "pontos": 305,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-04",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 5,
+     "vitorias": 90,
+     "derrotas": 105,
+     "pontos": 305,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-05",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 5,
+     "vitorias": 90,
+     "derrotas": 105,
+     "pontos": 305,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-06",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 85,
+     "vitorias": 90,
+     "derrotas": 106,
+     "pontos": 285,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-07",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 85,
+     "vitorias": 90,
+     "derrotas": 106,
+     "pontos": 285,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-08",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 85,
+     "vitorias": 90,
+     "derrotas": 106,
+     "pontos": 285,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-09",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 85,
+     "vitorias": 90,
+     "derrotas": 106,
+     "pontos": 285,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-10",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 85,
+     "vitorias": 90,
+     "derrotas": 106,
+     "pontos": 285,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-11",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 65,
+     "vitorias": 90,
+     "derrotas": 107,
+     "pontos": 265,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-12",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 35,
+     "vitorias": 95,
+     "derrotas": 109,
+     "pontos": 335,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-13",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 17,
+     "vitorias": 96,
+     "derrotas": 111,
+     "pontos": 317,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-14",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 27,
+     "vitorias": 101,
+     "derrotas": 111,
+     "pontos": 427,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-15",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 89,
+     "vitorias": 102,
+     "derrotas": 114,
+     "pontos": 389,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-16",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 89,
+     "vitorias": 102,
+     "derrotas": 114,
+     "pontos": 389,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-17",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 89,
+     "vitorias": 102,
+     "derrotas": 114,
+     "pontos": 389,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-18",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 97,
+     "vitorias": 106,
+     "derrotas": 118,
+     "pontos": 397,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-19",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 97,
+     "vitorias": 106,
+     "derrotas": 118,
+     "pontos": 397,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-20",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 21,
+     "vitorias": 108,
+     "derrotas": 119,
+     "pontos": 421,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-21",
+     "tier": "BRONZE",
+     "rank": "IV",
+     "lp": 21,
+     "vitorias": 108,
+     "derrotas": 119,
+     "pontos": 421,
+     "estimado": true
+    },
+    {
      "data": "2026-10-22",
      "tier": "BRONZE",
      "rank": "IV",
      "lp": 1,
      "vitorias": 108,
      "derrotas": 120,
-     "pontos": 401
+     "pontos": 401,
+     "estimado": false
     }
    ]
   },
@@ -71,13 +875,214 @@
    "funcao": "",
    "historico": [
     {
+     "data": "2026-10-02",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 44,
+     "vitorias": 85,
+     "derrotas": 105,
+     "pontos": 244,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-03",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 44,
+     "vitorias": 85,
+     "derrotas": 105,
+     "pontos": 244,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-04",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 90,
+     "vitorias": 88,
+     "derrotas": 106,
+     "pontos": 290,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-05",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 56,
+     "vitorias": 91,
+     "derrotas": 106,
+     "pontos": 356,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-06",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 36,
+     "vitorias": 91,
+     "derrotas": 107,
+     "pontos": 336,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-07",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 36,
+     "vitorias": 91,
+     "derrotas": 107,
+     "pontos": 336,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-08",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 76,
+     "vitorias": 91,
+     "derrotas": 110,
+     "pontos": 276,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-09",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 76,
+     "vitorias": 91,
+     "derrotas": 110,
+     "pontos": 276,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-10",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 76,
+     "vitorias": 91,
+     "derrotas": 110,
+     "pontos": 276,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-11",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 20,
+     "vitorias": 93,
+     "derrotas": 110,
+     "pontos": 320,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-12",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 42,
+     "vitorias": 94,
+     "derrotas": 110,
+     "pontos": 342,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-13",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 68,
+     "vitorias": 97,
+     "derrotas": 112,
+     "pontos": 368,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-14",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 92,
+     "vitorias": 99,
+     "derrotas": 113,
+     "pontos": 392,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-15",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 74,
+     "vitorias": 100,
+     "derrotas": 115,
+     "pontos": 374,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-16",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 14,
+     "vitorias": 100,
+     "derrotas": 118,
+     "pontos": 314,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-17",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 74,
+     "vitorias": 100,
+     "derrotas": 120,
+     "pontos": 274,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-18",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 74,
+     "vitorias": 100,
+     "derrotas": 120,
+     "pontos": 274,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-19",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 74,
+     "vitorias": 100,
+     "derrotas": 120,
+     "pontos": 274,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-20",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 36,
+     "vitorias": 101,
+     "derrotas": 123,
+     "pontos": 236,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-21",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 98,
+     "vitorias": 102,
+     "derrotas": 126,
+     "pontos": 198,
+     "estimado": true
+    },
+    {
      "data": "2026-10-22",
      "tier": "IRON",
      "rank": "III",
      "lp": 98,
      "vitorias": 102,
      "derrotas": 126,
-     "pontos": 198
+     "pontos": 198,
+     "estimado": false
     }
    ]
   },
@@ -87,13 +1092,214 @@
    "funcao": "",
    "historico": [
     {
+     "data": "2026-10-02",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 57,
+     "vitorias": 122,
+     "derrotas": 141,
+     "pontos": 557,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-03",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 57,
+     "vitorias": 122,
+     "derrotas": 141,
+     "pontos": 557,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-04",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 19,
+     "vitorias": 123,
+     "derrotas": 144,
+     "pontos": 519,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-05",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 41,
+     "vitorias": 124,
+     "derrotas": 144,
+     "pontos": 541,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-06",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 41,
+     "vitorias": 124,
+     "derrotas": 144,
+     "pontos": 541,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-07",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 41,
+     "vitorias": 124,
+     "derrotas": 144,
+     "pontos": 541,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-08",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 41,
+     "vitorias": 124,
+     "derrotas": 144,
+     "pontos": 541,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-09",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 41,
+     "vitorias": 124,
+     "derrotas": 144,
+     "pontos": 541,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-10",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 41,
+     "vitorias": 124,
+     "derrotas": 144,
+     "pontos": 541,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-11",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 41,
+     "vitorias": 124,
+     "derrotas": 144,
+     "pontos": 541,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-12",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 45,
+     "vitorias": 126,
+     "derrotas": 146,
+     "pontos": 545,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-13",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 45,
+     "vitorias": 126,
+     "derrotas": 146,
+     "pontos": 545,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-14",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 45,
+     "vitorias": 126,
+     "derrotas": 146,
+     "pontos": 545,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-15",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 47,
+     "vitorias": 127,
+     "derrotas": 147,
+     "pontos": 547,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-16",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 47,
+     "vitorias": 127,
+     "derrotas": 147,
+     "pontos": 547,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-17",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 7,
+     "vitorias": 127,
+     "derrotas": 149,
+     "pontos": 507,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-18",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 73,
+     "vitorias": 130,
+     "derrotas": 149,
+     "pontos": 573,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-19",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 73,
+     "vitorias": 130,
+     "derrotas": 149,
+     "pontos": 573,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-20",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 53,
+     "vitorias": 130,
+     "derrotas": 150,
+     "pontos": 553,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-21",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 53,
+     "vitorias": 130,
+     "derrotas": 150,
+     "pontos": 553,
+     "estimado": true
+    },
+    {
      "data": "2026-10-22",
      "tier": "BRONZE",
      "rank": "III",
      "lp": 53,
      "vitorias": 130,
      "derrotas": 150,
-     "pontos": 553
+     "pontos": 553,
+     "estimado": false
     }
    ]
   },
@@ -103,13 +1309,214 @@
    "funcao": "",
    "historico": [
     {
+     "data": "2026-10-02",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 51,
+     "vitorias": 311,
+     "derrotas": 410,
+     "pontos": 351,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-03",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 53,
+     "vitorias": 312,
+     "derrotas": 411,
+     "pontos": 353,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-04",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 61,
+     "vitorias": 316,
+     "derrotas": 415,
+     "pontos": 361,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-05",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 43,
+     "vitorias": 317,
+     "derrotas": 417,
+     "pontos": 343,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-06",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 7,
+     "vitorias": 319,
+     "derrotas": 421,
+     "pontos": 307,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-07",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 69,
+     "vitorias": 320,
+     "derrotas": 424,
+     "pontos": 269,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-08",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 97,
+     "vitorias": 324,
+     "derrotas": 427,
+     "pontos": 297,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-09",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 97,
+     "vitorias": 324,
+     "derrotas": 427,
+     "pontos": 297,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-10",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 97,
+     "vitorias": 324,
+     "derrotas": 427,
+     "pontos": 297,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-11",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 97,
+     "vitorias": 324,
+     "derrotas": 427,
+     "pontos": 297,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-12",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 97,
+     "vitorias": 324,
+     "derrotas": 427,
+     "pontos": 297,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-13",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 97,
+     "vitorias": 324,
+     "derrotas": 427,
+     "pontos": 297,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-14",
+     "tier": "IRON",
+     "rank": "I",
+     "lp": 19,
+     "vitorias": 325,
+     "derrotas": 427,
+     "pontos": 319,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-15",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 61,
+     "vitorias": 326,
+     "derrotas": 431,
+     "pontos": 261,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-16",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 81,
+     "vitorias": 326,
+     "derrotas": 435,
+     "pontos": 181,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-17",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 81,
+     "vitorias": 326,
+     "derrotas": 435,
+     "pontos": 181,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-18",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 43,
+     "vitorias": 327,
+     "derrotas": 438,
+     "pontos": 143,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-19",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 43,
+     "vitorias": 327,
+     "derrotas": 438,
+     "pontos": 143,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-20",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 31,
+     "vitorias": 331,
+     "derrotas": 438,
+     "pontos": 231,
+     "estimado": true
+    },
+    {
+     "data": "2026-10-21",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 57,
+     "vitorias": 334,
+     "derrotas": 440,
+     "pontos": 257,
+     "estimado": true
+    },
+    {
      "data": "2026-10-22",
      "tier": "IRON",
      "rank": "II",
      "lp": 21,
      "vitorias": 336,
      "derrotas": 444,
-     "pontos": 221
+     "pontos": 221,
+     "estimado": false
     }
    ]
   }
