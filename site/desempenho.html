@@ -26,6 +26,20 @@
   .grafico.baixo { height: 260px; }
   section.card + section.card { margin-top: 16px; }
   td.num, th.num { text-align: right; }
+  .ordenar {
+    font: inherit; font-weight: 600; color: var(--ink-2); background: none; border: 0; padding: 0;
+    cursor: pointer; white-space: nowrap;
+  }
+  .ordenar:hover, .ordenar.ativo { color: var(--ink); }
+  .ordenar:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; border-radius: 2px; }
+  .cab-secao { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .cab-secao h2 { margin: 0; }
+  .cab-secao label { color: var(--ink-2); font-size: 14px; }
+  .cab-secao select {
+    font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; margin-left: 4px;
+  }
+  .controles { display: flex; gap: 14px; flex-wrap: wrap; }
   .camp { display: flex; align-items: center; gap: 8px; }
   .camp img { width: 28px; height: 28px; border-radius: 6px; }
   .mini { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 6px; }
@@ -59,12 +73,29 @@
   </section>
 
   <section class="card" id="sec-atletas">
-    <h2>Atletas</h2>
+    <div class="cab-secao">
+      <h2>Atletas</h2>
+      <label>Ordenar por
+        <select class="ordem" data-tabela="tab-atletas"><option value="n">Partidas</option><option value="wr">Winrate</option><option value="kda">KDA</option><option value="cs">CS/min</option><option value="dano">Dano/min</option><option value="nome">Nome</option></select>
+      </label>
+    </div>
     <div class="tabela-wrap"><table id="tab-atletas"></table></div>
   </section>
 
   <section class="card">
-    <h2>Campeões</h2>
+    <div class="cab-secao">
+      <h2>Campeões</h2>
+      <span class="controles">
+      <label>Ordenar por
+        <select class="ordem" data-tabela="tab-campeoes"><option value="n">Partidas</option><option value="wr">Winrate</option><option value="kda">KDA</option><option value="cs">CS/min</option><option value="dano">Dano/min</option><option value="nome">Nome</option></select>
+      </label>
+      <label>Mínimo de partidas
+        <select id="min-partidas">
+          <option value="1">1</option><option value="3">3</option><option value="5">5</option><option value="10">10</option>
+        </select>
+      </label>
+      </span>
+    </div>
     <div class="tabela-wrap"><table id="tab-campeoes"></table></div>
   </section>
 
@@ -186,11 +217,40 @@ function desenharGrafico(lista) {
   });
 }
 
+// Ordenação de cada tabela; números começam do maior, nomes em ordem alfabética.
+const ordem = { "tab-atletas": { chave: "n", desc: true }, "tab-campeoes": { chave: "n", desc: true } };
+let minPartidas = 1;
+
+// cabecalho: [texto, numérico?, chave de ordenação]; linhas: arrays de células ou { cels, val }.
 function tabela(id, cabecalho, linhas) {
   const t = document.getElementById(id);
-  const thead = el("thead", {}, el("tr", {}, ...cabecalho.map(([txt, num]) => el("th", { className: num ? "num" : "", textContent: txt }))));
+  const o = ordem[id];
+  const seletor = document.querySelector(`select.ordem[data-tabela="${id}"]`);
+  if (seletor && o) seletor.value = o.chave;
+  if (o) {
+    linhas = [...linhas].sort((a, b) => {
+      const x = a.val[o.chave], y = b.val[o.chave];
+      const dif = typeof x === "string" ? x.localeCompare(y, "pt-BR") : x - y;
+      return (o.desc ? -dif : dif) || b.val.n - a.val.n;
+    });
+  }
+  const thead = el("thead", {}, el("tr", {}, ...cabecalho.map(([txt, num, chave]) => {
+    const th = el("th", { className: num ? "num" : "" });
+    if (!o || !chave) { th.textContent = txt; return th; }
+    const ativo = o.chave === chave;
+    th.setAttribute("aria-sort", ativo ? (o.desc ? "descending" : "ascending") : "none");
+    const b = el("button", { type: "button", className: `ordenar${ativo ? " ativo" : ""}`, textContent: txt });
+    b.append(el("span", { className: "seta", textContent: ativo ? (o.desc ? " ▼" : " ▲") : "" }));
+    b.addEventListener("click", () => {
+      ordem[id] = ativo ? { chave, desc: !o.desc } : { chave, desc: chave !== "nome" };
+      render();
+    });
+    th.append(b);
+    return th;
+  })));
   const tbody = el("tbody");
-  for (const cels of linhas) {
+  for (const l of linhas) {
+    const cels = l.cels || l;
     tbody.append(el("tr", {}, ...cels.map((c, i) => {
       const td = el("td", { className: cabecalho[i][1] ? "num" : "" });
       if (c instanceof Node) td.append(c); else td.textContent = c;
@@ -200,6 +260,15 @@ function tabela(id, cabecalho, linhas) {
   if (!linhas.length) tbody.append(el("tr", {}, el("td", { colSpan: cabecalho.length, className: "muted", textContent: "Nenhuma partida ainda." })));
   t.replaceChildren(thead, tbody);
 }
+
+// Valores usados na ordenação; quem não tem partida vai para o fim.
+const valores = (nome, s) => ({
+  nome, n: s.n,
+  wr: s.n ? s.v / s.n : -1,
+  kda: s.n ? s.kda : -1,
+  cs: s.min ? s.cs / s.min : -1,
+  dano: s.min ? s.dano / s.min : -1,
+});
 
 function celCampeao(nome) {
   const c = campeao(nome);
@@ -227,26 +296,29 @@ function desenharAtletas() {
     const cont = {};
     lista.forEach(p => { cont[p.campeao] = (cont[p.campeao] || 0) + 1; });
     const top = Object.entries(cont).sort((a, b) => b[1] - a[1])[0];
-    return { s, cels: [celJogador(j), String(s.n), s.n ? `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)` : "—",
+    return { val: valores(j.nome, s), cels: [celJogador(j), String(s.n), s.n ? `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)` : "—",
       s.n ? fmt(s.kda, 2) : "—", s.min ? fmt(s.cs / s.min) : "—", s.min ? fmt(s.dano / s.min, 0) : "—",
       top ? celCampeao(top[0]) : "—"] };
-  }).sort((a, b) => b.s.n - a.s.n).map(x => x.cels);
-  tabela("tab-atletas", [["Atleta"], ["Partidas", 1], ["Winrate", 1], ["KDA", 1], ["CS/min", 1], ["Dano/min", 1], ["Mais jogado"]], linhas);
+  });
+  tabela("tab-atletas", [["Atleta", 0, "nome"], ["Partidas", 1, "n"], ["Winrate", 1, "wr"], ["KDA", 1, "kda"],
+    ["CS/min", 1, "cs"], ["Dano/min", 1, "dano"], ["Mais jogado"]], linhas);
 }
 
 function desenharCampeoes(lista) {
   const grupos = {};
   lista.forEach(p => (grupos[p.campeao] ||= []).push(p));
   const linhas = Object.entries(grupos)
-    .map(([nome, ps]) => ({ nome, s: somar(ps), quem: [...new Set(ps.map(p => p.riot_id.toLowerCase()))] }))
-    .sort((a, b) => b.s.n - a.s.n || b.s.v - a.s.v)
-    .map(({ nome, s, quem }) => {
+    .filter(([, ps]) => ps.length >= minPartidas)
+    .map(([nome, ps]) => {
+      const s = somar(ps);
+      const quem = new Set(ps.map(p => p.riot_id.toLowerCase()));
       const cels = [celCampeao(nome), String(s.n), `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)`,
         `${fmt(s.kda, 2)}`, kdaTexto(s), fmt(s.cs / s.min), fmt(s.dano / s.min, 0)];
-      if (!sel) cels.push(jogadores.filter(j => quem.includes(j.riot_id.toLowerCase())).map(j => j.nome).join(", "));
-      return cels;
+      if (!sel) cels.push(jogadores.filter(j => quem.has(j.riot_id.toLowerCase())).map(j => j.nome).join(", "));
+      return { val: valores(campeao(nome).nome, s), cels };
     });
-  const cab = [["Campeão"], ["Partidas", 1], ["Winrate", 1], ["KDA", 1], ["Abates / Mortes / Assist.", 1], ["CS/min", 1], ["Dano/min", 1]];
+  const cab = [["Campeão", 0, "nome"], ["Partidas", 1, "n"], ["Winrate", 1, "wr"], ["KDA", 1, "kda"],
+    ["Abates / Mortes / Assist.", 1], ["CS/min", 1, "cs"], ["Dano/min", 1, "dano"]];
   if (!sel) cab.push(["Quem jogou"]);
   tabela("tab-campeoes", cab, linhas);
 }
@@ -286,6 +358,11 @@ async function dataDragon() {
   } catch { /* sem ícones: mostra só os nomes */ }
 }
 
+document.querySelectorAll("select.ordem").forEach(s => s.addEventListener("change", () => {
+  ordem[s.dataset.tabela] = { chave: s.value, desc: s.value !== "nome" };
+  render();
+}));
+document.getElementById("min-partidas").addEventListener("change", e => { minPartidas = Number(e.target.value); render(); });
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => jogadores.length && render());
 
 Promise.all([
