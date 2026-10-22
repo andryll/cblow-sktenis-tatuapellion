@@ -6594,5 +6594,22 @@
 "dano": 12770,
 "ouro": 11587,
 "visao": 44
+},
+{
+"id": "BR1_3295824027",
+"riot_id": "PastorDeCalcinha#ZYRAO",
+"fim": "2026-10-22T10:46-03:00",
+"duracao": 2065,
+"remake": false,
+"vitoria": true,
+"campeao": "Ashe",
+"rota": "UTILITY",
+"abates": 2,
+"mortes": 11,
+"assistencias": 18,
+"cs": 62,
+"dano": 10672,
+"ouro": 11042,
+"visao": 75
 }
 ]
