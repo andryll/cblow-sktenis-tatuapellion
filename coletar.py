@@ -25,7 +25,7 @@ ARQ_SITE = RAIZ / "site" / "dados.json"
 
 BRASILIA = timezone(timedelta(hours=-3))  # sem horário de verão desde 2019
 
-CAMPOS = ["data", "nome", "riot_id", "tier", "rank", "lp", "vitorias", "derrotas", "pontos"]
+CAMPOS = ["data", "nome", "riot_id", "tier", "rank", "lp", "vitorias", "derrotas", "pontos", "estimado"]
 
 # Escala única para o gráfico: cada divisão vale 100 pontos (Ferro IV 0 PDL = 0).
 # Do Mestre pra cima não há divisões, então soma-se o PDL a partir de 2800.
@@ -73,11 +73,14 @@ def pontos(tier, rank, lp):
     return None
 
 
-def buscar_elo(jogador, chave):
-    nome_jogo, tag = jogador["riot_id"].rsplit("#", 1)
+def rotas(jogador):
     plataforma = jogador.get("servidor", "br1").lower()
-    regiao = REGIAO_CONTA.get(plataforma, "americas")
+    return plataforma, REGIAO_CONTA.get(plataforma, "americas")
 
+
+def buscar_puuid(jogador, chave):
+    nome_jogo, tag = jogador["riot_id"].rsplit("#", 1)
+    _, regiao = rotas(jogador)
     conta = chamar_api(
         f"https://{regiao}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/"
         f"{urllib.parse.quote(nome_jogo)}/{urllib.parse.quote(tag)}",
@@ -85,9 +88,14 @@ def buscar_elo(jogador, chave):
     )
     if conta is None:
         raise LookupError(f"Riot ID não encontrado: {jogador['riot_id']}")
+    return conta["puuid"]
 
+
+def buscar_elo(jogador, chave, puuid=None):
+    plataforma, _ = rotas(jogador)
+    puuid = puuid or buscar_puuid(jogador, chave)
     entradas = chamar_api(
-        f"https://{plataforma}.api.riotgames.com/lol/league/v4/entries/by-puuid/{conta['puuid']}",
+        f"https://{plataforma}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}",
         chave,
     ) or []
     solo = next((e for e in entradas if e["queueType"] == "RANKED_SOLO_5x5"), None)
@@ -139,6 +147,7 @@ def gerar_site(linhas, jogadores, agora):
                     "vitorias": inteiro(l["vitorias"]),
                     "derrotas": inteiro(l["derrotas"]),
                     "pontos": inteiro(l["pontos"]),
+                    "estimado": l.get("estimado") == "1",
                 }
                 for l in hist
             ],

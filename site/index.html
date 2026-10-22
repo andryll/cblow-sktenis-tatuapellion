@@ -105,7 +105,7 @@
   <section class="card">
     <h2>Evolução do elo</h2>
     <div class="grafico"><canvas id="grafico" aria-label="Gráfico de elo por dia"></canvas></div>
-    <p class="nota">Cada linha de grade é uma divisão; as mais fortes separam os tiers. Clique num nome da legenda para esconder ou mostrar.</p>
+    <p class="nota">Cada linha de grade é uma divisão; as mais fortes separam os tiers. Trecho tracejado: PDL estimado a partir do histórico de partidas (vitórias e derrotas são reais). Clique num nome da legenda para esconder ou mostrar.</p>
   </section>
 
   <section class="jogadores" id="jogadores"></section>
@@ -190,10 +190,12 @@ function desenharGrafico(datas) {
 
   const datasets = dados.jogadores.map((j, i) => {
     const porData = Object.fromEntries(j.historico.map(h => [h.data, h]));
+    const registros = datas.map(d => porData[d] || null);
     return {
       label: j.nome,
-      data: datas.map(d => porData[d]?.pontos ?? null),
-      registros: datas.map(d => porData[d] || null),
+      data: registros.map(r => r?.pontos ?? null),
+      registros,
+      segment: { borderDash: c => (registros[c.p1DataIndex]?.estimado ? [5, 4] : undefined) },
       borderColor: corJogador(i),
       backgroundColor: corJogador(i),
       borderWidth: 2,
@@ -254,7 +256,7 @@ function desenharGrafico(datas) {
           callbacks: {
             label: item => {
               const r = item.dataset.registros[item.dataIndex];
-              return ` ${eloTexto(r)} · ${r.lp} PDL — ${item.dataset.label}`;
+              return ` ${eloTexto(r)} · ${r.estimado ? "~" : ""}${r.lp} PDL — ${item.dataset.label}${r.estimado ? " (estimado)" : ""}`;
             },
           },
         },
@@ -323,7 +325,7 @@ function desenharCards(datas) {
 
     const dl = document.createElement("dl");
     const dif = (a, b) => (a?.pontos != null && b?.pontos != null ? a.pontos - b.pontos : null);
-    linha(dl, "Desde a última coleta", delta(dif(atual, ontem)));
+    linha(dl, "Desde ontem", delta(dif(atual, ontem)));
     linha(dl, "No período", delta(dif(atual, primeiro)));
     const jogos = (atual && primeiro) ? (atual.vitorias + atual.derrotas) - (primeiro.vitorias + primeiro.derrotas) : null;
     linha(dl, "Partidas no período", jogos == null ? "—" : String(jogos));
@@ -343,7 +345,7 @@ function desenharTabela(datas) {
     .sort((a, b) => b.h.data.localeCompare(a.h.data) || a.j.nome.localeCompare(b.j.nome));
   for (const { j, h } of linhas) {
     const tr = document.createElement("tr");
-    for (const v of [dataCurta(h.data), j.nome, eloTexto(h), h.pontos == null ? "—" : h.lp, h.vitorias, h.derrotas]) {
+    for (const v of [dataCurta(h.data), j.nome, eloTexto(h), h.pontos == null ? "—" : (h.estimado ? `~${h.lp}` : h.lp), h.vitorias, h.derrotas]) {
       const td = document.createElement("td");
       td.textContent = v;
       tr.append(td);
