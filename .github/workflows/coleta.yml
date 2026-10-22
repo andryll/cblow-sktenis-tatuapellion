@@ -1,9 +1,9 @@
 name: Coleta de elo
 
+# Disparado de hora em hora (minuto 17) pelo cron-job.org via API (workflow_dispatch);
+# o agendamento do próprio GitHub não disparava neste repositório.
 on:
-  schedule:
-    - cron: "17 * * * *"   # a cada hora, no minuto 17 (o minuto 0 é o mais congestionado no GitHub)
-  workflow_dispatch:        # botão "Run workflow" para rodar na hora
+  workflow_dispatch:        # também é o botão "Run workflow" para rodar na hora
     inputs:
       reconstruir:
         description: "Reconstruir o histórico desde o início do campeonato"
