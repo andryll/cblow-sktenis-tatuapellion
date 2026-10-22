@@ -25,6 +25,8 @@ ARQ_HISTORICO = RAIZ / "dados" / "historico.csv"
 ARQ_PARTIDAS = RAIZ / "dados" / "partidas.json"
 ARQ_SITE = RAIZ / "site" / "dados.json"
 ARQ_SITE_PARTIDAS = RAIZ / "site" / "partidas.json"
+PASTA_FOTOS = RAIZ / "site" / "fotos"
+URL_FOTOS = "https://cdn.cblow.xyz/jogadores"  # fotos oficiais do CBLOW
 
 INICIO_CAMPEONATO = date(2026, 10, 2)
 FILA_SOLO = 420
@@ -201,6 +203,31 @@ def salvar_historico(linhas):
         w.writerows(linhas)
 
 
+def arquivo_foto(jogador):
+    return PASTA_FOTOS / f"{jogador['nome']}.webp"
+
+
+def baixar_foto(jogador):
+    """Baixa a foto do site do CBLOW para quem ainda não tem; sem foto lá, tenta na próxima coleta."""
+    destino = arquivo_foto(jogador)
+    if destino.exists():
+        return False
+    # O CDN não é consistente com maiúsculas (ex.: pastordecalcinha.webp).
+    for nome in dict.fromkeys([jogador["nome"], jogador["nome"].lower()]):
+        req = urllib.request.Request(f"{URL_FOTOS}/{urllib.parse.quote(nome)}.webp",
+                                     headers={"User-Agent": "cblow-soloq-tracker/1.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                dados = resp.read()
+        except urllib.error.URLError:
+            continue
+        if dados[:4] == b"RIFF" and dados[8:12] == b"WEBP":
+            PASTA_FOTOS.mkdir(parents=True, exist_ok=True)
+            destino.write_bytes(dados)
+            return True
+    return False
+
+
 def gerar_site(linhas, jogadores, agora):
     def inteiro(v):
         return int(v) if v not in ("", None) else None
@@ -212,7 +239,7 @@ def gerar_site(linhas, jogadores, agora):
             "nome": j["nome"],
             "riot_id": j["riot_id"],
             "funcao": j.get("funcao", ""),
-            "foto": j.get("foto", ""),
+            "foto": f"fotos/{arquivo_foto(j).name}" if arquivo_foto(j).exists() else "",
             "historico": [
                 {
                     "data": l["data"],
@@ -254,6 +281,9 @@ def main():
             falhas += 1
             print(f"[erro] {j['nome']} ({j['riot_id']}): {e}")
             continue
+
+        if baixar_foto(j):
+            print(f"[foto] {j['nome']}: baixada do site do CBLOW")
 
         try:
             novas = atualizar_partidas(j, puuid, chave, partidas)

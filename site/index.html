@@ -62,7 +62,9 @@ let dias = 30;
 let grafico = null;
 
 const css = nome => getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
+// A paleta tem 8 cores; do 9º atleta em diante a cor se repete com marcador de triângulo.
 const corJogador = i => css(`--s${(i % 8) + 1}`);
+const repeteCor = i => i >= 8;
 
 function eloTexto(h) {
   if (!h || h.pontos == null) return "Sem rank";
@@ -125,7 +127,8 @@ function desenharGrafico(datas) {
       borderColor: corJogador(i),
       backgroundColor: corJogador(i),
       borderWidth: 2,
-      pointRadius: datas.length > 30 ? 0 : 4,
+      pointStyle: repeteCor(i) ? "triangle" : "circle",
+      pointRadius: repeteCor(i) ? 5 : datas.length > 30 ? 0 : 4,
       pointHoverRadius: 5,
       pointBorderColor: css("--surface"),
       pointBorderWidth: 2,
@@ -169,6 +172,7 @@ function desenharGrafico(datas) {
             usePointStyle: true, pointStyle: "line", color: css("--ink-2"), boxWidth: 16, padding: 14,
             generateLabels: chart => Chart.defaults.plugins.legend.labels.generateLabels(chart).map(l => ({
               ...l, strokeStyle: chart.data.datasets[l.datasetIndex].borderColor, lineWidth: 3,
+              ...(repeteCor(l.datasetIndex) && { pointStyle: "triangle", fillStyle: chart.data.datasets[l.datasetIndex].borderColor, lineWidth: 0 }),
             })),
           },
         },
@@ -225,7 +229,7 @@ function desenharCards(datas) {
     const topo = document.createElement("div");
     topo.className = "topo";
     const chave = document.createElement("span");
-    chave.className = "chave";
+    chave.className = repeteCor(i) ? "chave tri" : "chave";
     chave.style.background = corJogador(i);
     const nome = document.createElement("span");
     nome.className = "nome";

@@ -2,7 +2,7 @@
 
 Acompanha diariamente o elo de SoloQ dos atletas e publica os gráficos no GitHub Pages.
 
-- `jogadores.json` — lista de atletas (`nome`, `riot_id` no formato `Nick#TAG`, `funcao`, `foto`; opcional `servidor`, padrão `br1`). Fotos em `site/fotos/`, tiradas de cblow.xyz.
+- `jogadores.json` — lista de atletas (`nome`, `riot_id` no formato `Nick#TAG`, `funcao`; opcional `servidor`, padrão `br1`). Novos atletas vão no fim da lista para não trocar as cores do gráfico. A foto fica em `site/fotos/<nome>.webp`; quem ainda não tem, a coleta tenta baixar do CDN do cblow.xyz a cada execução.
 - `coletar.py` — consulta a API da Riot, grava `dados/historico.csv` e gera `site/dados.json`. Só usa a biblioteca padrão do Python.
 - `site/index.html` — página de evolução do elo.
 - `site/desempenho.html` — desempenho desde o início do campeonato: winrate, KDA, CS e dano por minuto, campeões jogados e últimas partidas (só ranqueadas solo; remakes ficam de fora).
