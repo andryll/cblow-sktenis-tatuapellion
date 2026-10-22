@@ -207,6 +207,18 @@ def arquivo_foto(jogador):
     return PASTA_FOTOS / f"{jogador['nome']}.webp"
 
 
+def reduzir_foto(arquivo, lado=192):
+    """As fotos do CBLOW vêm com 1254px; o card mostra 44px. Sem Pillow, fica como veio."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return
+    with Image.open(arquivo) as im:
+        im = im.convert("RGB")
+        im.thumbnail((lado, lado), Image.LANCZOS)
+        im.save(arquivo, quality=82)
+
+
 def baixar_foto(jogador):
     """Baixa a foto do site do CBLOW para quem ainda não tem; sem foto lá, tenta na próxima coleta."""
     destino = arquivo_foto(jogador)
@@ -224,6 +236,7 @@ def baixar_foto(jogador):
         if dados[:4] == b"RIFF" and dados[8:12] == b"WEBP":
             PASTA_FOTOS.mkdir(parents=True, exist_ok=True)
             destino.write_bytes(dados)
+            reduzir_foto(destino)
             return True
     return False
 

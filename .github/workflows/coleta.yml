@@ -32,6 +32,8 @@ jobs:
         with:
           python-version: "3.12"
 
+      - run: pip install --quiet pillow   # só para reduzir fotos novas
+
       - name: Reconstruir histórico pelas partidas
         if: ${{ inputs.reconstruir }}
         env:
