@@ -6900,5 +6900,22 @@
 "dano": 12593,
 "ouro": 9228,
 "visao": 69
+},
+{
+"id": "BR1_3295922032",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-22T17:28-03:00",
+"duracao": 139,
+"remake": true,
+"vitoria": false,
+"campeao": "Mel",
+"rota": "MIDDLE",
+"abates": 0,
+"mortes": 0,
+"assistencias": 0,
+"cs": 14,
+"dano": 655,
+"ouro": 924,
+"visao": 0
 }
 ]
