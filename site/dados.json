@@ -1,5 +1,5 @@
 {
- "atualizado_em": "2026-10-22T10:26-03:00",
+ "atualizado_em": "2026-10-22T12:09-03:00",
  "jogadores": [
   {
    "nome": "KarlinRox",
@@ -658,7 +658,7 @@
   {
    "nome": "VosUzz",
    "riot_id": "SKTT VosUzz#001",
-   "funcao": "Jungle",
+   "funcao": "Suporte",
    "foto": "fotos/VosUzz.webp",
    "historico": [
     {
@@ -1312,7 +1312,7 @@
   {
    "nome": "PastorDeCalcinha",
    "riot_id": "PastorDeCalcinha#ZYRAO",
-   "funcao": "Suporte",
+   "funcao": "Jungle",
    "foto": "fotos/PastorDeCalcinha.webp",
    "historico": [
     {
@@ -1518,11 +1518,11 @@
     {
      "data": "2026-10-22",
      "tier": "IRON",
-     "rank": "III",
-     "lp": 98,
-     "vitorias": 102,
+     "rank": "II",
+     "lp": 16,
+     "vitorias": 103,
      "derrotas": 126,
-     "pontos": 198,
+     "pontos": 216,
      "estimado": false
     }
    ]
@@ -1530,7 +1530,7 @@
   {
    "nome": "SrTaveira",
    "riot_id": "SrTaveira#br1",
-   "funcao": "Suporte",
+   "funcao": "Mid/Suporte",
    "foto": "fotos/SrTaveira.webp",
    "historico": [
     {
