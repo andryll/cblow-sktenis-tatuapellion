@@ -2,9 +2,9 @@
   {"nome": "KarlinRox", "riot_id": "SKTT KarlinRox#cblow", "funcao": "Top", "foto": "fotos/KarlinRox.webp"},
   {"nome": "Ceyf", "riot_id": "SKTT Ceyf#CBLOW", "funcao": "Top", "foto": "fotos/Ceyf.webp"},
   {"nome": "ExC4mBau", "riot_id": "SKT ExC4mBau#CBLOW", "funcao": "Jungle", "foto": "fotos/ExC4mBau.webp"},
-  {"nome": "VosUzz", "riot_id": "SKTT VosUzz#001", "funcao": "Jungle", "foto": "fotos/VosUzz.webp"},
+  {"nome": "VosUzz", "riot_id": "SKTT VosUzz#001", "funcao": "Suporte", "foto": "fotos/VosUzz.webp"},
   {"nome": "drytski", "riot_id": "drytski#uwu", "funcao": "Mid", "foto": "fotos/drytski.webp"},
   {"nome": "SK4RAVELHO", "riot_id": "SK4RAVELHO#BR1", "funcao": "ADC", "foto": "fotos/SK4RAVELHO.webp"},
-  {"nome": "PastorDeCalcinha", "riot_id": "PastorDeCalcinha#ZYRAO", "funcao": "Suporte", "foto": "fotos/PastorDeCalcinha.webp"},
-  {"nome": "SrTaveira", "riot_id": "SrTaveira#br1", "funcao": "Suporte", "foto": "fotos/SrTaveira.webp"}
+  {"nome": "PastorDeCalcinha", "riot_id": "PastorDeCalcinha#ZYRAO", "funcao": "Jungle", "foto": "fotos/PastorDeCalcinha.webp"},
+  {"nome": "SrTaveira", "riot_id": "SrTaveira#br1", "funcao": "Mid/Suporte", "foto": "fotos/SrTaveira.webp"}
 ]
