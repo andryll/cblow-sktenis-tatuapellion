@@ -46,14 +46,16 @@ class ChaveInvalida(Exception):
 
 
 def chamar_api(url, chave, tentativas=4):
-    req = urllib.request.Request(url, headers={"X-Riot-Token": chave})
+    # O Cloudflare na frente da API bloqueia o User-Agent padrão do urllib (erro 1010).
+    req = urllib.request.Request(url, headers={"X-Riot-Token": chave, "User-Agent": "cblow-soloq-tracker/1.0"})
     for _ in range(tentativas):
         try:
             with urllib.request.urlopen(req, timeout=20) as resp:
                 return json.load(resp)
         except urllib.error.HTTPError as e:
             if e.code in (401, 403):
-                raise ChaveInvalida(f"HTTP {e.code}: chave da Riot inválida ou expirada")
+                corpo = e.read().decode("utf-8", "replace")[:200]
+                raise ChaveInvalida(f"HTTP {e.code} da API da Riot (chave inválida ou expirada?): {corpo}")
             if e.code == 404:
                 return None
             if e.code == 429 or e.code >= 500:
