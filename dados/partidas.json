@@ -68,6 +68,23 @@
 "visao": 14
 },
 {
+"id": "BR1_3289107803",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-02T20:02-03:00",
+"duracao": 1906,
+"remake": false,
+"vitoria": true,
+"campeao": "Mel",
+"rota": "MIDDLE",
+"abates": 17,
+"mortes": 3,
+"assistencias": 3,
+"cs": 290,
+"dano": 39382,
+"ouro": 19023,
+"visao": 19
+},
+{
 "id": "BR1_3289115381",
 "riot_id": "SrTaveira#br1",
 "fim": "2026-10-02T20:10-03:00",
@@ -2346,6 +2363,23 @@
 "visao": 9
 },
 {
+"id": "BR1_3292066919",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-11T17:29-03:00",
+"duracao": 1571,
+"remake": false,
+"vitoria": false,
+"campeao": "Lux",
+"rota": "UTILITY",
+"abates": 0,
+"mortes": 11,
+"assistencias": 3,
+"cs": 59,
+"dano": 9068,
+"ouro": 6079,
+"visao": 53
+},
+{
 "id": "BR1_3292073562",
 "riot_id": "SKTT VosUzz#001",
 "fim": "2026-10-11T17:35-03:00",
@@ -2378,6 +2412,23 @@
 "dano": 20389,
 "ouro": 13915,
 "visao": 28
+},
+{
+"id": "BR1_3292090240",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-11T18:24-03:00",
+"duracao": 2314,
+"remake": false,
+"vitoria": false,
+"campeao": "Karma",
+"rota": "UTILITY",
+"abates": 2,
+"mortes": 10,
+"assistencias": 16,
+"cs": 55,
+"dano": 12085,
+"ouro": 10708,
+"visao": 101
 },
 {
 "id": "BR1_3292096435",
@@ -4658,6 +4709,23 @@
 "visao": 24
 },
 {
+"id": "BR1_3294083636",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-17T11:36-03:00",
+"duracao": 94,
+"remake": true,
+"vitoria": false,
+"campeao": "Lulu",
+"rota": "UTILITY",
+"abates": 0,
+"mortes": 0,
+"assistencias": 0,
+"cs": 0,
+"dano": 0,
+"ouro": 569,
+"visao": 0
+},
+{
 "id": "BR1_3294088658",
 "riot_id": "SKTT VosUzz#001",
 "fim": "2026-10-17T12:18-03:00",
@@ -4673,6 +4741,23 @@
 "dano": 7762,
 "ouro": 8211,
 "visao": 31
+},
+{
+"id": "BR1_3294096384",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-17T12:50-03:00",
+"duracao": 2058,
+"remake": false,
+"vitoria": true,
+"campeao": "Lulu",
+"rota": "UTILITY",
+"abates": 2,
+"mortes": 6,
+"assistencias": 21,
+"cs": 29,
+"dano": 7771,
+"ouro": 11062,
+"visao": 105
 },
 {
 "id": "BR1_3294104067",
@@ -4707,6 +4792,23 @@
 "dano": 8292,
 "ouro": 7446,
 "visao": 23
+},
+{
+"id": "BR1_3294110069",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-17T13:28-03:00",
+"duracao": 1893,
+"remake": false,
+"vitoria": false,
+"campeao": "Lulu",
+"rota": "UTILITY",
+"abates": 3,
+"mortes": 5,
+"assistencias": 22,
+"cs": 34,
+"dano": 7085,
+"ouro": 9131,
+"visao": 65
 },
 {
 "id": "BR1_3294125566",
@@ -5015,6 +5117,23 @@
 "visao": 6
 },
 {
+"id": "BR1_3294248219",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-17T19:29-03:00",
+"duracao": 1984,
+"remake": false,
+"vitoria": true,
+"campeao": "Ashe",
+"rota": "BOTTOM",
+"abates": 6,
+"mortes": 8,
+"assistencias": 17,
+"cs": 132,
+"dano": 29665,
+"ouro": 14017,
+"visao": 32
+},
+{
 "id": "BR1_3294258149",
 "riot_id": "SKTT VosUzz#001",
 "fim": "2026-10-17T20:00-03:00",
@@ -5049,6 +5168,23 @@
 "visao": 1
 },
 {
+"id": "BR1_3294266207",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-17T20:18-03:00",
+"duracao": 2606,
+"remake": false,
+"vitoria": true,
+"campeao": "MissFortune",
+"rota": "BOTTOM",
+"abates": 13,
+"mortes": 4,
+"assistencias": 13,
+"cs": 306,
+"dano": 41903,
+"ouro": 21204,
+"visao": 43
+},
+{
 "id": "BR1_3294285112",
 "riot_id": "SKTT KarlinRox#cblow",
 "fim": "2026-10-17T20:30-03:00",
@@ -5066,6 +5202,23 @@
 "visao": 9
 },
 {
+"id": "BR1_3294288624",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-17T20:51-03:00",
+"duracao": 1511,
+"remake": false,
+"vitoria": false,
+"campeao": "MissFortune",
+"rota": "BOTTOM",
+"abates": 12,
+"mortes": 11,
+"assistencias": 2,
+"cs": 112,
+"dano": 24272,
+"ouro": 12079,
+"visao": 13
+},
+{
 "id": "BR1_3294296263",
 "riot_id": "SKTT KarlinRox#cblow",
 "fim": "2026-10-17T21:16-03:00",
@@ -5081,6 +5234,23 @@
 "dano": 42984,
 "ouro": 14004,
 "visao": 13
+},
+{
+"id": "BR1_3294306227",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-17T21:27-03:00",
+"duracao": 1793,
+"remake": false,
+"vitoria": true,
+"campeao": "MissFortune",
+"rota": "BOTTOM",
+"abates": 14,
+"mortes": 2,
+"assistencias": 10,
+"cs": 158,
+"dano": 29479,
+"ouro": 15121,
+"visao": 20
 },
 {
 "id": "BR1_3294319028",
@@ -5523,6 +5693,40 @@
 "dano": 18627,
 "ouro": 11638,
 "visao": 16
+},
+{
+"id": "BR1_3294529492",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-18T14:07-03:00",
+"duracao": 2329,
+"remake": false,
+"vitoria": true,
+"campeao": "Ashe",
+"rota": "BOTTOM",
+"abates": 7,
+"mortes": 8,
+"assistencias": 12,
+"cs": 180,
+"dano": 26021,
+"ouro": 14724,
+"visao": 32
+},
+{
+"id": "BR1_3294545469",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-18T14:41-03:00",
+"duracao": 1628,
+"remake": false,
+"vitoria": true,
+"campeao": "Ziggs",
+"rota": "BOTTOM",
+"abates": 6,
+"mortes": 4,
+"assistencias": 17,
+"cs": 108,
+"dano": 23890,
+"ouro": 11408,
+"visao": 18
 },
 {
 "id": "BR1_3294558393",
