@@ -2,7 +2,7 @@ name: Coleta de elo
 
 on:
   schedule:
-    - cron: "0 * * * *"    # a cada hora; o gráfico guarda o último valor de cada dia
+    - cron: "17 * * * *"   # a cada hora, no minuto 17 (o minuto 0 é o mais congestionado no GitHub)
   workflow_dispatch:        # botão "Run workflow" para rodar na hora
     inputs:
       reconstruir:
