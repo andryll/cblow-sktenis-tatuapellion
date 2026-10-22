@@ -64,6 +64,7 @@ h2 { font-size: 16px; margin: 0 0 12px; }
 .jog .quem { min-width: 0; }
 .jog .linha-nome { display: flex; align-items: center; gap: 6px; }
 .jog .chave { width: 16px; height: 3px; border-radius: 2px; flex: none; }
+.jog .chave.tri { width: 10px; height: 9px; border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
 .jog .nome { font-weight: 600; }
 .jog .funcao { color: var(--muted); font-size: 13px; margin-left: auto; align-self: flex-start; }
 .jog .rid { color: var(--muted); font-size: 13px; word-break: break-all; }
