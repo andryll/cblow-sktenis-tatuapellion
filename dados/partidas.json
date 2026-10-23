@@ -7087,5 +7087,22 @@
 "dano": 11243,
 "ouro": 13957,
 "visao": 39
+},
+{
+"id": "BR1_3296120545",
+"riot_id": "SKT ExC4mBau#CBLOW",
+"fim": "2026-10-23T02:20-03:00",
+"duracao": 2133,
+"remake": false,
+"vitoria": true,
+"campeao": "XinZhao",
+"rota": "JUNGLE",
+"abates": 9,
+"mortes": 6,
+"assistencias": 13,
+"cs": 219,
+"dano": 26553,
+"ouro": 15142,
+"visao": 33
 }
 ]
