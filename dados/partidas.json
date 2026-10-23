@@ -7036,5 +7036,39 @@
 "dano": 3996,
 "ouro": 7478,
 "visao": 4
+},
+{
+"id": "BR1_3296089406",
+"riot_id": "SKT ExC4mBau#CBLOW",
+"fim": "2026-10-23T00:22-03:00",
+"duracao": 1931,
+"remake": false,
+"vitoria": false,
+"campeao": "Chogath",
+"rota": "JUNGLE",
+"abates": 5,
+"mortes": 9,
+"assistencias": 1,
+"cs": 177,
+"dano": 10515,
+"ouro": 10916,
+"visao": 43
+},
+{
+"id": "BR1_3296105144",
+"riot_id": "SKT ExC4mBau#CBLOW",
+"fim": "2026-10-23T00:51-03:00",
+"duracao": 1392,
+"remake": false,
+"vitoria": true,
+"campeao": "Sejuani",
+"rota": "JUNGLE",
+"abates": 2,
+"mortes": 2,
+"assistencias": 5,
+"cs": 169,
+"dano": 7325,
+"ouro": 8880,
+"visao": 28
 }
 ]
