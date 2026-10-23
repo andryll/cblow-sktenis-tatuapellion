@@ -7189,5 +7189,22 @@
 "dano": 0,
 "ouro": 507,
 "visao": 0
+},
+{
+"id": "BR1_3296280022",
+"riot_id": "PastorDeCalcinha#ZYRAO",
+"fim": "2026-10-23T18:50-03:00",
+"duracao": 2000,
+"remake": false,
+"vitoria": true,
+"campeao": "Pantheon",
+"rota": "JUNGLE",
+"abates": 4,
+"mortes": 6,
+"assistencias": 11,
+"cs": 148,
+"dano": 16005,
+"ouro": 12814,
+"visao": 25
 }
 ]
