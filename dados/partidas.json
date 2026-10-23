@@ -7104,5 +7104,22 @@
 "dano": 26553,
 "ouro": 15142,
 "visao": 33
+},
+{
+"id": "BR1_3296130183",
+"riot_id": "SKT ExC4mBau#CBLOW",
+"fim": "2026-10-23T03:18-03:00",
+"duracao": 3138,
+"remake": false,
+"vitoria": true,
+"campeao": "Jinx",
+"rota": "BOTTOM",
+"abates": 5,
+"mortes": 14,
+"assistencias": 14,
+"cs": 267,
+"dano": 22490,
+"ouro": 19411,
+"visao": 18
 }
 ]
