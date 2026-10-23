@@ -7019,5 +7019,22 @@
 "dano": 16756,
 "ouro": 9825,
 "visao": 9
+},
+{
+"id": "BR1_3296063696",
+"riot_id": "drytski#uwu",
+"fim": "2026-10-22T23:27-03:00",
+"duracao": 1847,
+"remake": false,
+"vitoria": true,
+"campeao": "Mordekaiser",
+"rota": "TOP",
+"abates": 0,
+"mortes": 3,
+"assistencias": 1,
+"cs": 132,
+"dano": 3996,
+"ouro": 7478,
+"visao": 4
 }
 ]
