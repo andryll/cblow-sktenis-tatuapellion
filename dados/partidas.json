@@ -6985,5 +6985,39 @@
 "dano": 23959,
 "ouro": 12268,
 "visao": 28
+},
+{
+"id": "BR1_3296025846",
+"riot_id": "SKTT Ceyf#CBLOW",
+"fim": "2026-10-22T22:18-03:00",
+"duracao": 2079,
+"remake": false,
+"vitoria": false,
+"campeao": "Kled",
+"rota": "TOP",
+"abates": 6,
+"mortes": 7,
+"assistencias": 11,
+"cs": 194,
+"dano": 42063,
+"ouro": 13015,
+"visao": 19
+},
+{
+"id": "BR1_3296047300",
+"riot_id": "drytski#uwu",
+"fim": "2026-10-22T22:42-03:00",
+"duracao": 1495,
+"remake": false,
+"vitoria": true,
+"campeao": "Mel",
+"rota": "MIDDLE",
+"abates": 10,
+"mortes": 1,
+"assistencias": 3,
+"cs": 142,
+"dano": 16756,
+"ouro": 9825,
+"visao": 9
 }
 ]
