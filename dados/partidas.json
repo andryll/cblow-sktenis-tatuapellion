@@ -7138,5 +7138,22 @@
 "dano": 16989,
 "ouro": 11550,
 "visao": 29
+},
+{
+"id": "BR1_3296177570",
+"riot_id": "SK4RAVELHO#BR1",
+"fim": "2026-10-23T12:35-03:00",
+"duracao": 1540,
+"remake": false,
+"vitoria": false,
+"campeao": "Smolder",
+"rota": "BOTTOM",
+"abates": 2,
+"mortes": 7,
+"assistencias": 5,
+"cs": 166,
+"dano": 16879,
+"ouro": 9767,
+"visao": 10
 }
 ]
