@@ -7121,5 +7121,22 @@
 "dano": 22490,
 "ouro": 19411,
 "visao": 18
+},
+{
+"id": "BR1_3296137081",
+"riot_id": "SKT ExC4mBau#CBLOW",
+"fim": "2026-10-23T04:01-03:00",
+"duracao": 2197,
+"remake": false,
+"vitoria": false,
+"campeao": "Talon",
+"rota": "JUNGLE",
+"abates": 3,
+"mortes": 12,
+"assistencias": 6,
+"cs": 190,
+"dano": 16989,
+"ouro": 11550,
+"visao": 29
 }
 ]
