@@ -6968,5 +6968,22 @@
 "dano": 29491,
 "ouro": 11023,
 "visao": 15
+},
+{
+"id": "BR1_3296002457",
+"riot_id": "SKTT Ceyf#CBLOW",
+"fim": "2026-10-22T21:26-03:00",
+"duracao": 2035,
+"remake": false,
+"vitoria": false,
+"campeao": "Kled",
+"rota": "TOP",
+"abates": 4,
+"mortes": 13,
+"assistencias": 7,
+"cs": 171,
+"dano": 23959,
+"ouro": 12268,
+"visao": 28
 }
 ]
