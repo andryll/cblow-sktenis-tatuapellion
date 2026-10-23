@@ -7070,5 +7070,22 @@
 "dano": 7325,
 "ouro": 8880,
 "visao": 28
+},
+{
+"id": "BR1_3296113267",
+"riot_id": "SKT ExC4mBau#CBLOW",
+"fim": "2026-10-23T01:39-03:00",
+"duracao": 2384,
+"remake": false,
+"vitoria": true,
+"campeao": "Rammus",
+"rota": "JUNGLE",
+"abates": 1,
+"mortes": 10,
+"assistencias": 13,
+"cs": 253,
+"dano": 11243,
+"ouro": 13957,
+"visao": 39
 }
 ]
