@@ -7155,5 +7155,39 @@
 "dano": 16879,
 "ouro": 9767,
 "visao": 10
+},
+{
+"id": "BR1_3296183672",
+"riot_id": "SK4RAVELHO#BR1",
+"fim": "2026-10-23T13:08-03:00",
+"duracao": 1644,
+"remake": false,
+"vitoria": true,
+"campeao": "Smolder",
+"rota": "BOTTOM",
+"abates": 3,
+"mortes": 6,
+"assistencias": 11,
+"cs": 158,
+"dano": 15679,
+"ouro": 12474,
+"visao": 12
+},
+{
+"id": "BR1_3296189630",
+"riot_id": "SK4RAVELHO#BR1",
+"fim": "2026-10-23T13:17-03:00",
+"duracao": 68,
+"remake": true,
+"vitoria": false,
+"campeao": "Corki",
+"rota": "BOTTOM",
+"abates": 0,
+"mortes": 0,
+"assistencias": 0,
+"cs": 0,
+"dano": 0,
+"ouro": 507,
+"visao": 0
 }
 ]
