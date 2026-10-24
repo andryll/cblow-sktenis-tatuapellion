@@ -7393,5 +7393,39 @@
 "dano": 15921,
 "ouro": 11752,
 "visao": 22
+},
+{
+"id": "BR1_3296373280",
+"riot_id": "SKTT Ceyf#CBLOW",
+"fim": "2026-10-23T22:34-03:00",
+"duracao": 2027,
+"remake": false,
+"vitoria": true,
+"campeao": "Ornn",
+"rota": "TOP",
+"abates": 3,
+"mortes": 6,
+"assistencias": 7,
+"cs": 162,
+"dano": 26866,
+"ouro": 11526,
+"visao": 31
+},
+{
+"id": "BR1_3296366691",
+"riot_id": "drytski#uwu",
+"fim": "2026-10-23T22:36-03:00",
+"duracao": 2640,
+"remake": false,
+"vitoria": false,
+"campeao": "Galio",
+"rota": "UTILITY",
+"abates": 3,
+"mortes": 9,
+"assistencias": 18,
+"cs": 81,
+"dano": 22196,
+"ouro": 13335,
+"visao": 30
 }
 ]
