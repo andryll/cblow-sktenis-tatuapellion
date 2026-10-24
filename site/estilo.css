@@ -98,3 +98,24 @@ th { color: var(--ink-2); font-weight: 600; }
 .abas a:hover { color: var(--ink); }
 .abas a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
 
+/* Filtro de atleta e células de tabela usados em Desempenho e Últimas partidas. */
+.quem-filtro { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.quem-filtro button {
+  display: flex; align-items: center; gap: 6px;
+  font: inherit; font-size: 14px; color: var(--ink-2); background: transparent;
+  border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px 3px 3px; cursor: pointer;
+}
+.quem-filtro button.sem-foto { padding-left: 12px; }
+.quem-filtro button:hover { background: var(--border); }
+.quem-filtro button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-2); font-weight: 600; }
+.quem-filtro img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+
+td.num, th.num { text-align: right; }
+.camp { display: flex; align-items: center; gap: 8px; }
+.camp img { width: 28px; height: 28px; border-radius: 6px; }
+.mini { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 6px; }
+.res { font-weight: 600; }
+.res.v { color: var(--up); }
+.res.d { color: var(--down); }
+.muted { color: var(--muted); }
+
