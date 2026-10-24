@@ -7852,5 +7852,39 @@
 "dano": 0,
 "ouro": 517,
 "visao": 0
+},
+{
+"id": "BR1_3296666754",
+"riot_id": "SKTT Ceyf#CBLOW",
+"fim": "2026-10-24T17:35-03:00",
+"duracao": 1433,
+"remake": false,
+"vitoria": false,
+"campeao": "Trundle",
+"rota": "TOP",
+"abates": 4,
+"mortes": 7,
+"assistencias": 0,
+"cs": 126,
+"dano": 23590,
+"ouro": 8035,
+"visao": 20
+},
+{
+"id": "BR1_3296662947",
+"riot_id": "Ynercias#068",
+"fim": "2026-10-24T17:53-03:00",
+"duracao": 2998,
+"remake": false,
+"vitoria": true,
+"campeao": "AurelionSol",
+"rota": "MIDDLE",
+"abates": 5,
+"mortes": 14,
+"assistencias": 8,
+"cs": 266,
+"dano": 24640,
+"ouro": 15642,
+"visao": 49
 }
 ]
