@@ -7699,5 +7699,22 @@
 "dano": 22264,
 "ouro": 14685,
 "visao": 18
+},
+{
+"id": "BR1_3296510486",
+"riot_id": "SKTT VosUzz#001",
+"fim": "2026-10-24T08:43-03:00",
+"duracao": 1654,
+"remake": false,
+"vitoria": false,
+"campeao": "Alistar",
+"rota": "UTILITY",
+"abates": 1,
+"mortes": 10,
+"assistencias": 4,
+"cs": 20,
+"dano": 4113,
+"ouro": 6393,
+"visao": 28
 }
 ]
