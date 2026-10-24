@@ -7,17 +7,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="stylesheet" href="estilo.css">
 <style>
-  .quem-filtro { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
-  .quem-filtro button {
-    display: flex; align-items: center; gap: 6px;
-    font: inherit; font-size: 14px; color: var(--ink-2); background: transparent;
-    border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px 3px 3px; cursor: pointer;
-  }
-  .quem-filtro button.sem-foto { padding-left: 12px; }
-  .quem-filtro button:hover { background: var(--border); }
-  .quem-filtro button[aria-pressed="true"] { color: var(--ink); border-color: var(--ink-2); font-weight: 600; }
-  .quem-filtro img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
-
   .tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-bottom: 16px; }
   .tile .rot { color: var(--ink-2); font-size: 13px; }
   .tile .val { font-size: 26px; font-weight: 600; margin-top: 2px; }
@@ -25,7 +14,6 @@
 
   .grafico.baixo { height: 260px; }
   section.card + section.card { margin-top: 16px; }
-  td.num, th.num { text-align: right; }
   .ordenar {
     font: inherit; font-weight: 600; color: var(--ink-2); background: none; border: 0; padding: 0;
     cursor: pointer; white-space: nowrap;
@@ -40,13 +28,6 @@
     border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; margin-left: 4px;
   }
   .controles { display: flex; gap: 14px; flex-wrap: wrap; }
-  .camp { display: flex; align-items: center; gap: 8px; }
-  .camp img { width: 28px; height: 28px; border-radius: 6px; }
-  .mini { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 6px; }
-  .res { font-weight: 600; }
-  .res.v { color: var(--up); }
-  .res.d { color: var(--down); }
-  .muted { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -61,6 +42,7 @@
   <nav class="abas">
     <a href="./">Elo</a>
     <a href="desempenho.html" aria-current="page">Desempenho</a>
+    <a href="partidas.html">Últimas partidas</a>
   </nav>
 
   <div class="quem-filtro" id="filtro" role="group" aria-label="Atleta"></div>
@@ -98,15 +80,9 @@
     </div>
     <div class="tabela-wrap"><table id="tab-campeoes"></table></div>
   </section>
-
-  <section class="card">
-    <h2>Últimas partidas</h2>
-    <div class="tabela-wrap"><table id="tab-partidas"></table></div>
-  </section>
 </main>
 
 <script>
-const ROTA = { TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid", BOTTOM: "ADC", UTILITY: "Suporte" };
 let jogadores = [], partidas = [], sel = null, grafico = null;
 let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
 
@@ -323,23 +299,6 @@ function desenharCampeoes(lista) {
   tabela("tab-campeoes", cab, linhas);
 }
 
-function desenharPartidas(lista) {
-  const porRid = Object.fromEntries(jogadores.map(j => [j.riot_id.toLowerCase(), j]));
-  const linhas = [...lista].sort((a, b) => b.fim.localeCompare(a.fim)).slice(0, 25).map(p => {
-    const [d, h] = p.fim.split("T");
-    const cels = [`${d.slice(8, 10)}/${d.slice(5, 7)} ${h.slice(0, 5)}`];
-    if (!sel) cels.push(celJogador(porRid[p.riot_id.toLowerCase()] || { nome: p.riot_id }));
-    cels.push(celCampeao(p.campeao), ROTA[p.rota] || "—",
-      el("span", { className: `res ${p.vitoria ? "v" : "d"}`, textContent: p.vitoria ? "Vitória" : "Derrota" }),
-      `${p.abates} / ${p.mortes} / ${p.assistencias}`, String(p.cs), `${Math.floor(p.duracao / 60)}min`);
-    return cels;
-  });
-  const cab = [["Quando"]];
-  if (!sel) cab.push(["Atleta"]);
-  cab.push(["Campeão"], ["Rota"], ["Resultado"], ["A / M / As", 1], ["CS", 1], ["Duração", 1]);
-  tabela("tab-partidas", cab, linhas);
-}
-
 function render() {
   const lista = selecionadas();
   desenharFiltro();
@@ -347,7 +306,6 @@ function render() {
   desenharGrafico(lista);
   desenharAtletas();
   desenharCampeoes(lista);
-  desenharPartidas(lista);
 }
 
 async function dataDragon() {

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKTenis Partidas</title>
+<link rel="stylesheet" href="estilo.css">
+<style>
+  .mais { margin-top: 12px; }
+  .mais button {
+    font: inherit; font-size: 14px; color: var(--ink-2); background: transparent;
+    border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px; cursor: pointer;
+  }
+  .mais button:hover { background: var(--border); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="fotos/time.webp" alt="">
+    <div>
+      <h1>SKTenis Tatuapellion · Últimas partidas</h1>
+      <p class="sub" id="sub">Carregando…</p>
+    </div>
+  </header>
+  <nav class="abas">
+    <a href="./">Elo</a>
+    <a href="desempenho.html">Desempenho</a>
+    <a href="partidas.html" aria-current="page">Últimas partidas</a>
+  </nav>
+
+  <div class="quem-filtro" id="filtro" role="group" aria-label="Atleta"></div>
+
+  <section class="card">
+    <div class="tabela-wrap"><table id="tab-partidas"></table></div>
+    <div class="mais" id="mais" hidden><button type="button">Mostrar mais</button></div>
+  </section>
+</main>
+
+<script>
+const ROTA = { TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid", BOTTOM: "ADC", UTILITY: "Suporte" };
+const POR_PAGINA = 50;
+let jogadores = [], partidas = [], sel = null, mostrar = POR_PAGINA;
+let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
+
+const el = (tag, props = {}, ...filhos) => {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...filhos);
+  return e;
+};
+
+function campeao(nome) {
+  const c = dd.porId[nome.toLowerCase()];
+  return { nome: c?.name || nome, icone: c && dd.versao ? `https://ddragon.leagueoflegends.com/cdn/${dd.versao}/img/champion/${c.id}.png` : null };
+}
+
+const doJogador = j => p => p.riot_id.toLowerCase() === j.riot_id.toLowerCase();
+
+function selecionadas() {
+  const validas = partidas.filter(p => !p.remake);
+  return sel ? validas.filter(doJogador(sel)) : validas;
+}
+
+function desenharFiltro() {
+  const box = document.getElementById("filtro");
+  box.replaceChildren();
+  const botao = (j) => {
+    const b = el("button", { type: "button" });
+    b.setAttribute("aria-pressed", String(sel === j));
+    if (j?.foto) b.append(el("img", { src: j.foto, alt: "" }));
+    else b.classList.add("sem-foto");
+    b.append(j ? j.nome : "Time todo");
+    b.addEventListener("click", () => { sel = j; mostrar = POR_PAGINA; render(); });
+    return b;
+  };
+  box.append(botao(null), ...jogadores.map(botao));
+}
+
+function celCampeao(nome) {
+  const c = campeao(nome);
+  const box = el("span", { className: "camp" });
+  if (c.icone) box.append(el("img", { src: c.icone, alt: "", loading: "lazy" }));
+  box.append(c.nome);
+  return box;
+}
+
+function celJogador(j) {
+  const box = el("span");
+  if (j.foto) box.append(el("img", { className: "mini", src: j.foto, alt: "" }));
+  box.append(j.nome);
+  return box;
+}
+
+function desenharPartidas(lista) {
+  const porRid = Object.fromEntries(jogadores.map(j => [j.riot_id.toLowerCase(), j]));
+  const ordenadas = [...lista].sort((a, b) => b.fim.localeCompare(a.fim));
+
+  const cab = [["Quando"]];
+  if (!sel) cab.push(["Atleta"]);
+  cab.push(["Campeão"], ["Rota"], ["Resultado"], ["A / M / As", 1], ["CS", 1], ["Dano", 1], ["Duração", 1]);
+
+  const thead = el("thead", {}, el("tr", {}, ...cab.map(([txt, num]) => el("th", { className: num ? "num" : "", textContent: txt }))));
+  const tbody = el("tbody");
+  for (const p of ordenadas.slice(0, mostrar)) {
+    const [d, h] = p.fim.split("T");
+    const cels = [`${d.slice(8, 10)}/${d.slice(5, 7)} ${h.slice(0, 5)}`];
+    if (!sel) cels.push(celJogador(porRid[p.riot_id.toLowerCase()] || { nome: p.riot_id }));
+    cels.push(celCampeao(p.campeao), ROTA[p.rota] || "—",
+      el("span", { className: `res ${p.vitoria ? "v" : "d"}`, textContent: p.vitoria ? "Vitória" : "Derrota" }),
+      `${p.abates} / ${p.mortes} / ${p.assistencias}`, String(p.cs),
+      p.dano.toLocaleString("pt-BR"), `${Math.floor(p.duracao / 60)}min`);
+    tbody.append(el("tr", {}, ...cels.map((c, i) => {
+      const td = el("td", { className: cab[i][1] ? "num" : "" });
+      if (c instanceof Node) td.append(c); else td.textContent = c;
+      return td;
+    })));
+  }
+  if (!ordenadas.length) tbody.append(el("tr", {}, el("td", { colSpan: cab.length, className: "muted", textContent: "Nenhuma partida ainda." })));
+  document.getElementById("tab-partidas").replaceChildren(thead, tbody);
+  document.getElementById("mais").hidden = ordenadas.length <= mostrar;
+}
+
+function render() {
+  desenharFiltro();
+  desenharPartidas(selecionadas());
+}
+
+async function dataDragon() {
+  try {
+    const versoes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json").then(r => r.json());
+    const dados = await fetch(`https://ddragon.leagueoflegends.com/cdn/${versoes[0]}/data/pt_BR/champion.json`).then(r => r.json());
+    dd = { versao: versoes[0], porId: Object.fromEntries(Object.values(dados.data).map(c => [c.id.toLowerCase(), c])) };
+  } catch { /* sem ícones: mostra só os nomes */ }
+}
+
+document.querySelector("#mais button").addEventListener("click", () => { mostrar += POR_PAGINA; render(); });
+
+Promise.all([
+  fetch("dados.json", { cache: "no-store" }).then(r => r.json()),
+  fetch("partidas.json", { cache: "no-store" }).then(r => (r.ok ? r.json() : [])),
+  dataDragon(),
+]).then(([d, p]) => {
+  jogadores = d.jogadores;
+  partidas = p;
+  const quando = new Date(d.atualizado_em);
+  document.getElementById("sub").textContent =
+    `Ranqueadas solo desde 02/10 · atualizado em ${quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`;
+  render();
+}).catch(() => {
+  document.getElementById("sub").textContent = "Ainda não há dados.";
+});
+</script>
+</body>
+</html>
