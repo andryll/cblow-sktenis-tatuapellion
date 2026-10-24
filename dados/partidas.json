@@ -7801,5 +7801,39 @@
 "dano": 42494,
 "ouro": 14649,
 "visao": 58
+},
+{
+"id": "BR1_3296540608",
+"riot_id": "SKTT Ceyf#CBLOW",
+"fim": "2026-10-24T12:09-03:00",
+"duracao": 2460,
+"remake": false,
+"vitoria": true,
+"campeao": "Kled",
+"rota": "TOP",
+"abates": 4,
+"mortes": 10,
+"assistencias": 16,
+"cs": 259,
+"dano": 25790,
+"ouro": 15579,
+"visao": 36
+},
+{
+"id": "BR1_3296557333",
+"riot_id": "SKTT Ceyf#CBLOW",
+"fim": "2026-10-24T12:40-03:00",
+"duracao": 1197,
+"remake": false,
+"vitoria": true,
+"campeao": "TahmKench",
+"rota": "TOP",
+"abates": 4,
+"mortes": 0,
+"assistencias": 6,
+"cs": 144,
+"dano": 7747,
+"ouro": 7705,
+"visao": 15
 }
 ]
