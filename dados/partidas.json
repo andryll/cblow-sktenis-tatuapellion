@@ -7835,5 +7835,22 @@
 "dano": 7747,
 "ouro": 7705,
 "visao": 15
+},
+{
+"id": "BR1_3296647977",
+"riot_id": "SKTT KarlinRox#cblow",
+"fim": "2026-10-24T16:34-03:00",
+"duracao": 73,
+"remake": true,
+"vitoria": false,
+"campeao": "TahmKench",
+"rota": "TOP",
+"abates": 0,
+"mortes": 0,
+"assistencias": 0,
+"cs": 0,
+"dano": 0,
+"ouro": 517,
+"visao": 0
 }
 ]
