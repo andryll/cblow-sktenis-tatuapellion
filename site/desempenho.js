@@ -1,9 +1,9 @@
 // Páginas de desempenho: a página define window.FILAS (filas que entram nas contas).
 const FILAS = window.FILAS || ["solo"];
 const GERAL = FILAS.length > 1;
-const NOME_FILA = { solo: "SoloQ", flex: "Flex", personalizada: "Personalizada" };
-const SIGLA_FILA = { solo: "Solo", flex: "Flex", personalizada: "Pers." };
-const DESCRICAO = GERAL ? "SoloQ, flex e personalizadas" : "ranqueadas solo";
+const NOME_FILA = { solo: "SoloQ", flex: "Flex", campeonato: "Campeonato" };
+const SIGLA_FILA = { solo: "Solo", flex: "Flex", campeonato: "Camp." };
+const DESCRICAO = GERAL ? "SoloQ, flex e jogos do campeonato" : "ranqueadas solo";
 
 let jogadores = [], partidas = [], sel = null, grafico = null;
 let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
@@ -23,14 +23,17 @@ function campeao(nome) {
 }
 
 function somar(lista) {
-  const s = { n: lista.length, v: 0, k: 0, d: 0, a: 0, cs: 0, dano: 0, visao: 0, min: 0 };
+  // Jogos do campeonato não têm dano: o dano por minuto usa só os minutos de quem tem.
+  const s = { n: lista.length, v: 0, k: 0, d: 0, a: 0, cs: 0, dano: 0, minDano: 0, min: 0 };
   for (const p of lista) {
     s.v += p.vitoria ? 1 : 0; s.k += p.abates; s.d += p.mortes; s.a += p.assistencias;
-    s.cs += p.cs; s.dano += p.dano; s.visao += p.visao; s.min += p.duracao / 60;
+    s.cs += p.cs; s.min += p.duracao / 60;
+    if (p.dano != null) { s.dano += p.dano; s.minDano += p.duracao / 60; }
   }
   s.kda = (s.k + s.a) / Math.max(1, s.d);
   return s;
 }
+const danoMin = s => (s.minDano ? fmt(s.dano / s.minDano, 0) : "—");
 
 const kdaTexto = s => (s.n ? `${fmt(s.k / s.n)} / ${fmt(s.d / s.n)} / ${fmt(s.a / s.n)}` : "—");
 const doJogador = j => p => p.riot_id.toLowerCase() === j.riot_id.toLowerCase();
@@ -68,7 +71,7 @@ function desenharTiles(lista) {
     tile("Winrate", pct(s.v, s.n), `${s.v}V ${s.n - s.v}D`),
     tile("KDA", s.n ? fmt(s.kda, 2) : "—", kdaTexto(s)),
     tile("CS por minuto", s.min ? fmt(s.cs / s.min) : "—", s.n ? `${Math.round(s.cs / s.n)} por partida` : ""),
-    tile("Dano por minuto", s.min ? fmt(s.dano / s.min, 0) : "—", "em campeões"),
+    tile("Dano por minuto", danoMin(s), GERAL ? "em campeões, sem os jogos do campeonato" : "em campeões"),
   );
 }
 
@@ -167,7 +170,7 @@ const valores = (nome, s) => ({
   wr: s.n ? s.v / s.n : -1,
   kda: s.n ? s.kda : -1,
   cs: s.min ? s.cs / s.min : -1,
-  dano: s.min ? s.dano / s.min : -1,
+  dano: s.minDano ? s.dano / s.minDano : -1,
 });
 
 function celCampeao(nome) {
@@ -199,7 +202,7 @@ function desenharAtletas() {
     const cels = [celJogador(j), String(s.n)];
     if (GERAL) cels.push(FILAS.map(f => lista.filter(p => (p.fila || "solo") === f).length).join(" / "));
     cels.push(s.n ? `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)` : "—",
-      s.n ? fmt(s.kda, 2) : "—", s.min ? fmt(s.cs / s.min) : "—", s.min ? fmt(s.dano / s.min, 0) : "—",
+      s.n ? fmt(s.kda, 2) : "—", s.min ? fmt(s.cs / s.min) : "—", danoMin(s),
       top ? celCampeao(top[0]) : "—");
     return { val: valores(j.nome, s), cels };
   });
@@ -218,7 +221,7 @@ function desenharCampeoes(lista) {
       const s = somar(ps);
       const quem = new Set(ps.map(p => p.riot_id.toLowerCase()));
       const cels = [celCampeao(nome), String(s.n), `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)`,
-        `${fmt(s.kda, 2)}`, kdaTexto(s), fmt(s.cs / s.min), fmt(s.dano / s.min, 0)];
+        `${fmt(s.kda, 2)}`, kdaTexto(s), fmt(s.cs / s.min), danoMin(s)];
       if (!sel) cels.push(jogadores.filter(j => quem.has(j.riot_id.toLowerCase())).map(j => j.nome).join(", "));
       return { val: valores(campeao(nome).nome, s), cels };
     });

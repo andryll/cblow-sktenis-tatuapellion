@@ -4,9 +4,9 @@ Uso:
     RIOT_API_KEY=RGAPI-... python coletar.py
 
 Grava uma linha por jogador por dia em dados/historico.csv (rodar de novo no
-mesmo dia substitui a linha do dia), baixa as partidas novas (solo, flex e
-personalizadas) desde o início do campeonato para dados/partidas.json e gera os
-arquivos do site.
+mesmo dia substitui a linha do dia), baixa as partidas novas (solo e flex pela
+Riot, jogos oficiais do campeonato pela API do CBLOW) desde o início do
+campeonato para dados/partidas.json e gera os arquivos do site.
 """
 
 import csv
@@ -30,11 +30,14 @@ PASTA_FOTOS = RAIZ / "site" / "fotos"
 URL_FOTOS = "https://cdn.cblow.xyz/jogadores"  # fotos oficiais do CBLOW
 
 INICIO_CAMPEONATO = date(2026, 10, 2)
-# queueId da partida -> fila guardada em partidas.json. Personalizada (inclusive com
-# código de torneio) é 0; a Riot só devolve as personalizadas que a API expõe.
-FILAS = {420: "solo", 440: "flex", 0: "personalizada"}
-# Filtros da lista de partidas por jogador; os resultados são somados.
-BUSCAS = ["queue=420", "queue=440", "queue=0", "type=tourney"]
+# queueId da partida -> fila guardada em partidas.json. Personalizadas comuns não
+# saem na API da Riot; os jogos oficiais vêm da API do CBLOW (fila "campeonato").
+FILAS = {420: "solo", 440: "flex"}
+
+API_CBLOW = "https://api.cblow.xyz"
+TIME_CBLOW = "sktenis"  # slug do time na API do CBLOW
+ROTA_CBLOW = {"top": "TOP", "jungle": "JUNGLE", "mid": "MIDDLE", "adc": "BOTTOM", "support": "UTILITY"}
+URL_CAMPEOES = "https://ddragon.leagueoflegends.com/cdn/{versao}/data/en_US/champion.json"
 
 BRASILIA = timezone(timedelta(hours=-3))  # sem horário de verão desde 2019
 
@@ -166,7 +169,7 @@ def resumir_partida(mid, info, puuid, riot_id):
 
 
 def atualizar_partidas(jogador, puuid, chave, partidas, pausa=0.0):
-    """Acrescenta em `partidas` as partidas solo, flex e personalizadas do jogador que ainda não estão lá."""
+    """Acrescenta em `partidas` as partidas solo e flex do jogador que ainda não estão lá."""
     rid = jogador["riot_id"].lower()
     conhecidas = {p["id"] for p in partidas if p["riot_id"].lower() == rid}
     _, regiao = rotas(jogador)
@@ -174,34 +177,94 @@ def atualizar_partidas(jogador, puuid, chave, partidas, pausa=0.0):
     inicio_ts = int(datetime.combine(INICIO_CAMPEONATO, datetime.min.time(), BRASILIA).timestamp())
 
     ids = []
-    for busca in BUSCAS:
+    for fila in FILAS:
         pagina = 0
         while True:
             time.sleep(pausa)
-            try:
-                lote = chamar_api(f"{base}/by-puuid/{puuid}/ids?{busca}&startTime={inicio_ts}"
-                                  f"&start={pagina * 100}&count=100", chave) or []
-            except urllib.error.HTTPError as e:
-                # Um filtro recusado (400) não pode derrubar as outras filas.
-                print(f"[aviso] {jogador['nome']}: lista de partidas com {busca} recusada (HTTP {e.code})")
-                break
+            lote = chamar_api(f"{base}/by-puuid/{puuid}/ids?queue={fila}&startTime={inicio_ts}"
+                              f"&start={pagina * 100}&count=100", chave) or []
             ids += lote
             if len(lote) < 100:
                 break
             pagina += 1
 
     novas = 0
-    for mid in dict.fromkeys(ids):
+    for mid in ids:
         if mid in conhecidas:
             continue
         time.sleep(pausa)
         partida = chamar_api(f"{base}/{mid}", chave)
-        if not partida or partida["info"].get("queueId") not in FILAS:
-            continue
-        resumo = resumir_partida(mid, partida["info"], puuid, jogador["riot_id"])
+        resumo = partida and resumir_partida(mid, partida["info"], puuid, jogador["riot_id"])
         if resumo:
             partidas.append(resumo)
             novas += 1
+    return novas
+
+
+def baixar_json(url):
+    req = urllib.request.Request(url, headers={"User-Agent": "cblow-soloq-tracker/1.0"})
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        return json.load(resp)
+
+
+def ids_campeoes():
+    """Nome de exibição ou id do Data Dragon, normalizado -> id ("Miss Fortune" -> "MissFortune", "Wukong" -> "MonkeyKing")."""
+    versao = baixar_json("https://ddragon.leagueoflegends.com/api/versions.json")[0]
+    dados = baixar_json(URL_CAMPEOES.format(versao=versao))["data"]
+    normal = {}
+    for c in dados.values():
+        normal[normalizar(c["name"])] = c["id"]
+        normal[normalizar(c["id"])] = c["id"]
+    return normal
+
+
+def normalizar(nome):
+    return "".join(ch for ch in nome.lower() if ch.isalnum())
+
+
+def atualizar_campeonato(jogadores, partidas):
+    """Acrescenta em `partidas` os jogos oficiais do time no CBLOW que ainda não estão lá.
+
+    A API do CBLOW não tem dano, ouro nem visão; esses campos ficam nulos. O fim do jogo
+    é o horário marcado da série somado à duração dos jogos até ele.
+    """
+    por_nick = {j["nome"].lower(): j for j in jogadores}
+    conhecidas = {p["id"].split("_")[1] for p in partidas if p["fila"] == "campeonato"}
+    series = [m for m in baixar_json(f"{API_CBLOW}/matches")
+              if m["status"] == "finalizada" and TIME_CBLOW in (m["team1"]["slug"], m["team2"]["slug"])
+              and str(m["id"]) not in conhecidas]
+    if not series:
+        return 0
+    campeoes = ids_campeoes()
+    novas = 0
+    for m in series:
+        detalhe = baixar_json(f"{API_CBLOW}/matches/{m['id']}")
+        inicio = datetime.fromisoformat(detalhe["scheduledAt"].replace("Z", "+00:00"))
+        for jogo in sorted(detalhe["games"], key=lambda g: g["number"]):
+            inicio += timedelta(seconds=jogo["durationSec"])
+            for linha in jogo["lines"]:
+                j = por_nick.get(linha["player"]["nick"].lower()) or por_nick.get(linha["player"]["slug"])
+                if j is None:
+                    continue
+                partidas.append({
+                    "id": f"CBLOW_{m['id']}_{jogo['number']}",
+                    "riot_id": j["riot_id"],
+                    "fila": "campeonato",
+                    "fim": inicio.astimezone(BRASILIA).isoformat(timespec="minutes"),
+                    "duracao": jogo["durationSec"],
+                    "remake": jogo["durationSec"] < 300,
+                    "vitoria": jogo["winnerId"] == linha["teamId"],
+                    "campeao": campeoes.get(normalizar(linha["champion"]), linha["champion"]),
+                    "rota": ROTA_CBLOW.get(linha["player"]["role"], ""),
+                    "abates": linha["kills"],
+                    "mortes": linha["deaths"],
+                    "assistencias": linha["assists"],
+                    "cs": linha["cs"],
+                    "dano": None,
+                    "ouro": None,
+                    "visao": None,
+                })
+                novas += 1
     return novas
 
 
@@ -329,6 +392,11 @@ def main():
                        **{k: ("" if v is None else v) for k, v in elo.items()}})
         desc = "sem rank" if elo["pontos"] is None else f"{elo['tier']} {elo['rank']} {elo['lp']} PDL"
         print(f"[ok] {j['nome']}: {desc} ({elo['vitorias']}V {elo['derrotas']}D), {novas} partidas novas")
+
+    try:
+        print(f"[ok] campeonato: {atualizar_campeonato(jogadores, partidas)} jogos novos de atletas no CBLOW")
+    except Exception as e:
+        print(f"[erro] jogos do campeonato (api.cblow.xyz): {e}")
 
     salvar_historico(linhas)
     salvar_partidas(partidas)

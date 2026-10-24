@@ -35,7 +35,7 @@
     <button type="button" data-fila="" aria-pressed="true">Todas</button>
     <button type="button" data-fila="solo">SoloQ</button>
     <button type="button" data-fila="flex">Flex</button>
-    <button type="button" data-fila="personalizada">Personalizada</button>
+    <button type="button" data-fila="campeonato">Campeonato</button>
   </div>
 
   <div class="quem-filtro" id="filtro" role="group" aria-label="Atleta"></div>
@@ -48,7 +48,7 @@
 
 <script>
 const ROTA = { TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid", BOTTOM: "ADC", UTILITY: "Suporte" };
-const NOME_FILA = { solo: "SoloQ", flex: "Flex", personalizada: "Personalizada" };
+const NOME_FILA = { solo: "SoloQ", flex: "Flex", campeonato: "Campeonato" };
 const POR_PAGINA = 50;
 let jogadores = [], partidas = [], sel = null, fila = "", mostrar = POR_PAGINA;
 let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
@@ -121,7 +121,7 @@ function desenharPartidas(lista) {
     cels.push(celCampeao(p.campeao), ROTA[p.rota] || "—",
       el("span", { className: `res ${p.vitoria ? "v" : "d"}`, textContent: p.vitoria ? "Vitória" : "Derrota" }),
       `${p.abates} / ${p.mortes} / ${p.assistencias}`, String(p.cs),
-      p.dano.toLocaleString("pt-BR"), `${Math.floor(p.duracao / 60)}min`);
+      p.dano == null ? "—" : p.dano.toLocaleString("pt-BR"), `${Math.floor(p.duracao / 60)}min`);
     tbody.append(el("tr", {}, ...cels.map((c, i) => {
       const td = el("td", { className: cab[i][1] ? "num" : "" });
       if (c instanceof Node) td.append(c); else td.textContent = c;
@@ -163,7 +163,7 @@ Promise.all([
   partidas = p;
   const quando = new Date(d.atualizado_em);
   document.getElementById("sub").textContent =
-    `SoloQ, flex e personalizadas desde 02/10 · atualizado em ${quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`;
+    `SoloQ, flex e jogos do campeonato desde 02/10 · atualizado em ${quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`;
   render();
 }).catch(() => {
   document.getElementById("sub").textContent = "Ainda não há dados.";
