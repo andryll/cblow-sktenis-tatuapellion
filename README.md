@@ -8,7 +8,7 @@ Acompanha diariamente o elo de SoloQ dos atletas e publica os gráficos no GitHu
 - `site/desempenho.html` — desempenho desde o início do campeonato: winrate, KDA, CS e dano por minuto, campeões jogados (só ranqueadas solo; remakes ficam de fora).
 - `site/partidas.html` — últimas partidas de todos os atletas ou de um só, 50 por vez.
 - `dados/partidas.json` — resumo de cada ranqueada solo dos atletas desde 02/10 (match-v5); a coleta de hora em hora baixa só as novas.
-- `reconstruir.py` — reconstrói os dias passados pelo histórico de partidas (match-v5). Vitórias/derrotas por dia são exatas; o PDL é estimado (+22 por vitória, −20 por derrota) e aparece tracejado no gráfico.
+- `reconstruir.py` — reconstrói os dias antes da primeira coleta real. Vitórias/derrotas por dia são exatas (match-v5); o PDL é estimado e aparece tracejado no gráfico. A linha passa pelos registros exatos do op.gg (`dados/opgg.json`) e pelas coletas reais, com o ganho/perda por partida ajustado entre eles, e fica dentro da divisão que o League of Graphs mostra em cada momento (`dados/leagueofgraphs.json`). Os dois arquivos foram baixados uma vez pelo navegador, porque os sites bloqueiam robôs. Roda sem a chave da Riot (`python reconstruir.py`); com a chave, baixa as partidas novas antes.
 - `.github/workflows/coleta.yml` — coleta, salva o histórico no repositório e publica o site. Quem dispara de hora em hora é um cronjob no cron-job.org (POST em `/repos/andryll/cblow-sktenis-tatuapellion/actions/workflows/coleta.yml/dispatches` com `{"ref":"main"}` e um token fine-grained com Actions: read and write). O gráfico guarda o último valor de cada dia.
 
 ## Configuração
