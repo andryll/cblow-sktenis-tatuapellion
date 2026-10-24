@@ -7716,5 +7716,22 @@
 "dano": 4113,
 "ouro": 6393,
 "visao": 28
+},
+{
+"id": "BR1_3296512693",
+"riot_id": "SKTT VosUzz#001",
+"fim": "2026-10-24T09:29-03:00",
+"duracao": 1902,
+"remake": false,
+"vitoria": true,
+"campeao": "Senna",
+"rota": "UTILITY",
+"abates": 4,
+"mortes": 7,
+"assistencias": 7,
+"cs": 39,
+"dano": 7458,
+"ouro": 10382,
+"visao": 48
 }
 ]
