@@ -26,9 +26,17 @@
   </header>
   <nav class="abas">
     <a href="./">Elo</a>
-    <a href="desempenho.html">Desempenho</a>
+    <a href="desempenho.html">Desempenho SoloQ</a>
+    <a href="geral.html">Desempenho geral</a>
     <a href="partidas.html" aria-current="page">Últimas partidas</a>
   </nav>
+
+  <div class="filtros" id="filas" role="group" aria-label="Tipo de partida">
+    <button type="button" data-fila="" aria-pressed="true">Todas</button>
+    <button type="button" data-fila="solo">SoloQ</button>
+    <button type="button" data-fila="flex">Flex</button>
+    <button type="button" data-fila="personalizada">Personalizada</button>
+  </div>
 
   <div class="quem-filtro" id="filtro" role="group" aria-label="Atleta"></div>
 
@@ -40,8 +48,9 @@
 
 <script>
 const ROTA = { TOP: "Top", JUNGLE: "Jungle", MIDDLE: "Mid", BOTTOM: "ADC", UTILITY: "Suporte" };
+const NOME_FILA = { solo: "SoloQ", flex: "Flex", personalizada: "Personalizada" };
 const POR_PAGINA = 50;
-let jogadores = [], partidas = [], sel = null, mostrar = POR_PAGINA;
+let jogadores = [], partidas = [], sel = null, fila = "", mostrar = POR_PAGINA;
 let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
 
 const el = (tag, props = {}, ...filhos) => {
@@ -56,9 +65,10 @@ function campeao(nome) {
 }
 
 const doJogador = j => p => p.riot_id.toLowerCase() === j.riot_id.toLowerCase();
+const filaDe = p => p.fila || "solo";  // partidas antigas não têm "fila": eram todas solo
 
 function selecionadas() {
-  const validas = partidas.filter(p => !p.remake);
+  const validas = partidas.filter(p => !p.remake && (!fila || filaDe(p) === fila));
   return sel ? validas.filter(doJogador(sel)) : validas;
 }
 
@@ -97,6 +107,7 @@ function desenharPartidas(lista) {
   const ordenadas = [...lista].sort((a, b) => b.fim.localeCompare(a.fim));
 
   const cab = [["Quando"]];
+  if (!fila) cab.push(["Tipo"]);
   if (!sel) cab.push(["Atleta"]);
   cab.push(["Campeão"], ["Rota"], ["Resultado"], ["A / M / As", 1], ["CS", 1], ["Dano", 1], ["Duração", 1]);
 
@@ -105,6 +116,7 @@ function desenharPartidas(lista) {
   for (const p of ordenadas.slice(0, mostrar)) {
     const [d, h] = p.fim.split("T");
     const cels = [`${d.slice(8, 10)}/${d.slice(5, 7)} ${h.slice(0, 5)}`];
+    if (!fila) cels.push(NOME_FILA[filaDe(p)]);
     if (!sel) cels.push(celJogador(porRid[p.riot_id.toLowerCase()] || { nome: p.riot_id }));
     cels.push(celCampeao(p.campeao), ROTA[p.rota] || "—",
       el("span", { className: `res ${p.vitoria ? "v" : "d"}`, textContent: p.vitoria ? "Vitória" : "Derrota" }),
@@ -135,6 +147,12 @@ async function dataDragon() {
 }
 
 document.querySelector("#mais button").addEventListener("click", () => { mostrar += POR_PAGINA; render(); });
+document.querySelectorAll("#filas button").forEach(b => b.addEventListener("click", () => {
+  fila = b.dataset.fila;
+  mostrar = POR_PAGINA;
+  document.querySelectorAll("#filas button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  render();
+}));
 
 Promise.all([
   fetch("dados.json", { cache: "no-store" }).then(r => r.json()),
@@ -145,7 +163,7 @@ Promise.all([
   partidas = p;
   const quando = new Date(d.atualizado_em);
   document.getElementById("sub").textContent =
-    `Ranqueadas solo desde 02/10 · atualizado em ${quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`;
+    `SoloQ, flex e personalizadas desde 02/10 · atualizado em ${quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`;
   render();
 }).catch(() => {
   document.getElementById("sub").textContent = "Ainda não há dados.";

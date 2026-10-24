@@ -183,7 +183,7 @@ def reconstruir(jogador, partidas, linhas, opgg, log, agora, atual=None):
     rid = jogador["riot_id"].lower()
     minhas = sorted(
         (datetime.fromisoformat(p["fim"]), p["vitoria"]) for p in partidas
-        if p["riot_id"].lower() == rid and not p["remake"]
+        if p["riot_id"].lower() == rid and p["fila"] == "solo" and not p["remake"]
     )
     reais = sorted((l for l in linhas if l["riot_id"].lower() == rid
                     and l.get("estimado") != "1" and l["pontos"] != ""), key=lambda l: l["data"])

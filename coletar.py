@@ -4,8 +4,9 @@ Uso:
     RIOT_API_KEY=RGAPI-... python coletar.py
 
 Grava uma linha por jogador por dia em dados/historico.csv (rodar de novo no
-mesmo dia substitui a linha do dia), baixa as ranqueadas novas desde o início do
-campeonato para dados/partidas.json e gera os arquivos do site.
+mesmo dia substitui a linha do dia), baixa as partidas novas (solo, flex e
+personalizadas) desde o início do campeonato para dados/partidas.json e gera os
+arquivos do site.
 """
 
 import csv
@@ -29,7 +30,11 @@ PASTA_FOTOS = RAIZ / "site" / "fotos"
 URL_FOTOS = "https://cdn.cblow.xyz/jogadores"  # fotos oficiais do CBLOW
 
 INICIO_CAMPEONATO = date(2026, 10, 2)
-FILA_SOLO = 420
+# queueId da partida -> fila guardada em partidas.json. Personalizada (inclusive com
+# código de torneio) é 0; a Riot só devolve as personalizadas que a API expõe.
+FILAS = {420: "solo", 440: "flex", 0: "personalizada"}
+# Filtros da lista de partidas por jogador; os resultados são somados.
+BUSCAS = ["queue=420", "queue=440", "queue=0", "type=tourney"]
 
 BRASILIA = timezone(timedelta(hours=-3))  # sem horário de verão desde 2019
 
@@ -122,7 +127,10 @@ def buscar_elo(jogador, chave, puuid=None):
 def ler_partidas():
     if not ARQ_PARTIDAS.exists():
         return []
-    return json.loads(ARQ_PARTIDAS.read_text(encoding="utf-8"))
+    partidas = json.loads(ARQ_PARTIDAS.read_text(encoding="utf-8"))
+    for p in partidas:
+        p.setdefault("fila", "solo")  # antes só se baixava solo
+    return partidas
 
 
 def salvar_partidas(partidas):
@@ -139,6 +147,7 @@ def resumir_partida(mid, info, puuid, riot_id):
     return {
         "id": mid,
         "riot_id": riot_id,
+        "fila": FILAS[info["queueId"]],
         "fim": datetime.fromtimestamp(fim_ms / 1000, BRASILIA).isoformat(timespec="minutes"),
         "duracao": info["gameDuration"],
         # Remake não vale PDL nem conta como vitória/derrota.
@@ -157,30 +166,39 @@ def resumir_partida(mid, info, puuid, riot_id):
 
 
 def atualizar_partidas(jogador, puuid, chave, partidas, pausa=0.0):
-    """Acrescenta em `partidas` as ranqueadas solo do jogador que ainda não estão lá."""
+    """Acrescenta em `partidas` as partidas solo, flex e personalizadas do jogador que ainda não estão lá."""
     rid = jogador["riot_id"].lower()
     conhecidas = {p["id"] for p in partidas if p["riot_id"].lower() == rid}
     _, regiao = rotas(jogador)
     base = f"https://{regiao}.api.riotgames.com/lol/match/v5/matches"
     inicio_ts = int(datetime.combine(INICIO_CAMPEONATO, datetime.min.time(), BRASILIA).timestamp())
 
-    ids, pagina = [], 0
-    while True:
-        time.sleep(pausa)
-        lote = chamar_api(f"{base}/by-puuid/{puuid}/ids?queue={FILA_SOLO}&startTime={inicio_ts}"
-                          f"&start={pagina * 100}&count=100", chave) or []
-        ids += lote
-        if len(lote) < 100:
-            break
-        pagina += 1
+    ids = []
+    for busca in BUSCAS:
+        pagina = 0
+        while True:
+            time.sleep(pausa)
+            try:
+                lote = chamar_api(f"{base}/by-puuid/{puuid}/ids?{busca}&startTime={inicio_ts}"
+                                  f"&start={pagina * 100}&count=100", chave) or []
+            except urllib.error.HTTPError as e:
+                # Um filtro recusado (400) não pode derrubar as outras filas.
+                print(f"[aviso] {jogador['nome']}: lista de partidas com {busca} recusada (HTTP {e.code})")
+                break
+            ids += lote
+            if len(lote) < 100:
+                break
+            pagina += 1
 
     novas = 0
-    for mid in ids:
+    for mid in dict.fromkeys(ids):
         if mid in conhecidas:
             continue
         time.sleep(pausa)
         partida = chamar_api(f"{base}/{mid}", chave)
-        resumo = partida and resumir_partida(mid, partida["info"], puuid, jogador["riot_id"])
+        if not partida or partida["info"].get("queueId") not in FILAS:
+            continue
+        resumo = resumir_partida(mid, partida["info"], puuid, jogador["riot_id"])
         if resumo:
             partidas.append(resumo)
             novas += 1
