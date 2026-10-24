@@ -7427,5 +7427,39 @@
 "dano": 22196,
 "ouro": 13335,
 "visao": 30
+},
+{
+"id": "BR1_3296390615",
+"riot_id": "SKTT Ceyf#CBLOW",
+"fim": "2026-10-23T23:12-03:00",
+"duracao": 1855,
+"remake": false,
+"vitoria": true,
+"campeao": "Trundle",
+"rota": "JUNGLE",
+"abates": 3,
+"mortes": 5,
+"assistencias": 9,
+"cs": 189,
+"dano": 12271,
+"ouro": 12281,
+"visao": 30
+},
+{
+"id": "BR1_3296396434",
+"riot_id": "drytski#uwu",
+"fim": "2026-10-23T23:20-03:00",
+"duracao": 1649,
+"remake": false,
+"vitoria": false,
+"campeao": "Malzahar",
+"rota": "MIDDLE",
+"abates": 1,
+"mortes": 6,
+"assistencias": 5,
+"cs": 190,
+"dano": 14389,
+"ouro": 8921,
+"visao": 14
 }
 ]
