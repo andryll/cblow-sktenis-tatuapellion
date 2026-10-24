@@ -7461,5 +7461,39 @@
 "dano": 14389,
 "ouro": 8921,
 "visao": 14
+},
+{
+"id": "BR1_3296416200",
+"riot_id": "drytski#uwu",
+"fim": "2026-10-24T00:04-03:00",
+"duracao": 2322,
+"remake": false,
+"vitoria": true,
+"campeao": "Malzahar",
+"rota": "MIDDLE",
+"abates": 7,
+"mortes": 8,
+"assistencias": 15,
+"cs": 216,
+"dano": 35062,
+"ouro": 15130,
+"visao": 19
+},
+{
+"id": "BR1_3296439399",
+"riot_id": "drytski#uwu",
+"fim": "2026-10-24T00:58-03:00",
+"duracao": 2452,
+"remake": false,
+"vitoria": true,
+"campeao": "Malzahar",
+"rota": "MIDDLE",
+"abates": 1,
+"mortes": 11,
+"assistencias": 19,
+"cs": 217,
+"dano": 25677,
+"ouro": 12299,
+"visao": 16
 }
 ]
