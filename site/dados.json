@@ -1,5 +1,5 @@
 {
- "atualizado_em": "2026-10-24T10:00-03:00",
+ "atualizado_em": "2026-10-24T10:51-03:00",
  "jogadores": [
   {
    "nome": "KarlinRox",
@@ -945,10 +945,10 @@
      "data": "2026-10-24",
      "tier": "IRON",
      "rank": "IV",
-     "lp": 45,
+     "lp": 25,
      "vitorias": 138,
-     "derrotas": 194,
-     "pontos": 45,
+     "derrotas": 195,
+     "pontos": 25,
      "estimado": false
     }
    ]

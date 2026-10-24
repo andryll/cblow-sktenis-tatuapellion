@@ -7733,5 +7733,22 @@
 "dano": 7458,
 "ouro": 10382,
 "visao": 48
+},
+{
+"id": "BR1_3296520629",
+"riot_id": "SKTT VosUzz#001",
+"fim": "2026-10-24T10:33-03:00",
+"duracao": 2295,
+"remake": false,
+"vitoria": false,
+"campeao": "Lux",
+"rota": "BOTTOM",
+"abates": 2,
+"mortes": 8,
+"assistencias": 4,
+"cs": 181,
+"dano": 11626,
+"ouro": 10967,
+"visao": 13
 }
 ]
