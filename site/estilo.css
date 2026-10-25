@@ -90,7 +90,7 @@ th { color: var(--ink-2); font-weight: 600; }
 .vazio { color: var(--ink-2); }
 @media (max-width: 600px) { .grafico { height: 320px; } }
 
-.abas { display: flex; gap: 4px; margin: 0 0 18px; border-bottom: 1px solid var(--grid); }
+.abas { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 18px; border-bottom: 1px solid var(--grid); }
 .abas a {
   color: var(--ink-2); text-decoration: none; padding: 8px 14px; font-weight: 600;
   border-bottom: 2px solid transparent; margin-bottom: -1px;

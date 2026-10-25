@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKTenis Scout</title>
+<link rel="icon" type="image/webp" href="fotos/time.webp">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  .controles-scout { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .controles-scout .filtros { margin: 0; }
+  .controles-scout label { color: var(--ink-2); font-size: 14px; }
+  .controles-scout select {
+    font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; margin-left: 4px;
+  }
+  .adversarios { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); }
+  .adv .topo { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .adv .foto { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none; background: var(--grid); }
+  .adv .nome { font-weight: 600; }
+  .adv .rid { color: var(--muted); font-size: 13px; word-break: break-all; }
+  .adv .funcao { color: var(--muted); font-size: 13px; margin-left: auto; align-self: flex-start; text-align: right; }
+  .adv .resumo { color: var(--ink-2); font-size: 14px; margin-bottom: 4px; }
+  .adv .erro { color: var(--down); font-size: 13px; }
+  .adv .tabela-wrap { margin-top: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="fotos/time.webp" alt="">
+    <div>
+      <h1 id="titulo">SKTenis Tatuapellion · Scout</h1>
+      <p class="sub" id="sub">Carregando…</p>
+    </div>
+  </header>
+  <nav class="abas">
+    <a href="./">Elo</a>
+    <a href="desempenho.html">Desempenho SoloQ</a>
+    <a href="geral.html">Desempenho geral</a>
+    <a href="partidas.html">Últimas partidas</a>
+    <a href="scout.html" aria-current="page">Scout</a>
+  </nav>
+
+  <div class="controles-scout">
+    <div class="filtros" id="periodo" role="group" aria-label="Período">
+      <button type="button" data-dias="7">Últimos 7 dias</button>
+      <button type="button" data-dias="30" aria-pressed="true">Últimos 30 dias</button>
+      <button type="button" data-dias="0">Tudo</button>
+    </div>
+    <div class="filtros" id="filas" role="group" aria-label="Tipo de partida">
+      <button type="button" data-fila="" aria-pressed="true">Todas</button>
+      <button type="button" data-fila="solo">SoloQ</button>
+      <button type="button" data-fila="flex">Flex</button>
+      <button type="button" data-fila="campeonato">Campeonato</button>
+    </div>
+    <label>Mínimo de partidas
+      <select id="min-partidas">
+        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option>
+      </select>
+    </label>
+  </div>
+
+  <section class="adversarios" id="adversarios"></section>
+  <p class="nota" id="nota">SoloQ e flex vêm da Riot; Campeonato são os jogos oficiais no CBLOW, que não informam dano. Remakes ficam de fora.</p>
+</main>
+
+<script>
+const ROTA = { top: "Top", jungle: "Jungle", mid: "Mid", adc: "ADC", support: "Suporte" };
+const ORDEM_ROTA = ["top", "jungle", "mid", "adc", "support"];
+let scout = null, fila = "", dias = 30, minPartidas = 1;
+let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
+
+const el = (tag, props = {}, ...filhos) => {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...filhos);
+  return e;
+};
+const fmt = (v, casas = 1) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+const pct = (v, t) => (t ? `${Math.round(100 * v / t)}%` : "—");
+
+function campeao(nome) {
+  const c = dd.porId[nome.toLowerCase()];
+  return { nome: c?.name || nome, icone: c && dd.versao ? `https://ddragon.leagueoflegends.com/cdn/${dd.versao}/img/champion/${c.id}.png` : null };
+}
+
+function celCampeao(nome) {
+  const c = campeao(nome);
+  const box = el("span", { className: "camp" });
+  if (c.icone) box.append(el("img", { src: c.icone, alt: "", loading: "lazy" }));
+  box.append(c.nome);
+  return box;
+}
+
+// Jogos do campeonato não têm dano: o dano por minuto usa só os minutos de quem tem.
+function somar(lista) {
+  const s = { n: lista.length, v: 0, k: 0, d: 0, a: 0, dano: 0, minDano: 0 };
+  for (const p of lista) {
+    s.v += p.vitoria ? 1 : 0; s.k += p.abates; s.d += p.mortes; s.a += p.assistencias;
+    if (p.dano != null) { s.dano += p.dano; s.minDano += p.duracao / 60; }
+  }
+  s.kda = (s.k + s.a) / Math.max(1, s.d);
+  return s;
+}
+const kdaTexto = s => `${fmt(s.k / s.n)} / ${fmt(s.d / s.n)} / ${fmt(s.a / s.n)}`;
+
+function cardJogador(j) {
+  const limite = dias ? new Date(Date.now() - dias * 864e5) : null;
+  const doJogador = scout.partidas.filter(p => p.riot_id.toLowerCase() === j.riot_id.toLowerCase()
+    && !p.remake && (!fila || p.fila === fila) && (!limite || new Date(p.fim) >= limite));
+  const s = somar(doJogador);
+
+  const foto = el("img", { className: "foto", alt: "" });
+  if (j.foto) foto.src = j.foto;
+  const rid = j.riot_id.startsWith("cblow:") ? "" : j.riot_id;
+  const topo = el("div", { className: "topo" }, foto,
+    el("div", {}, el("div", { className: "nome", textContent: j.nome }), el("div", { className: "rid", textContent: rid })),
+    el("div", { className: "funcao", textContent: (ROTA[j.funcao] || j.funcao) + (j.reserva ? " · reserva" : "") }));
+
+  const card = el("article", { className: "card adv" }, topo);
+  if (j.erro) card.append(el("div", { className: "erro", textContent: j.erro + (j.erro.includes("Riot ID") ? " — só os jogos do campeonato entram" : "") }));
+  card.append(el("div", { className: "resumo", textContent: s.n
+    ? `${s.n} partidas · ${pct(s.v, s.n)} de winrate (${s.v}V ${s.n - s.v}D) · KDA ${fmt(s.kda, 2)}`
+    : "Nenhuma partida nesse filtro." }));
+
+  const grupos = {};
+  doJogador.forEach(p => (grupos[p.campeao] ||= []).push(p));
+  const linhas = Object.entries(grupos)
+    .map(([nome, ps]) => ({ nome, s: somar(ps) }))
+    .filter(l => l.s.n >= minPartidas)
+    .sort((a, b) => b.s.n - a.s.n || b.s.v / b.s.n - a.s.v / a.s.n);
+  if (linhas.length) {
+    const cab = [["Campeão"], ["Partidas", 1], ["Winrate", 1], ["KDA", 1], ["Dano/min", 1]];
+    const tbody = el("tbody", {}, ...linhas.map(({ nome, s }) => el("tr", {}, ...[
+      celCampeao(nome), String(s.n), `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)`,
+      el("span", { textContent: fmt(s.kda, 2), title: kdaTexto(s) }),
+      s.minDano ? fmt(s.dano / s.minDano, 0) : "—",
+    ].map((c, i) => {
+      const td = el("td", { className: cab[i][1] ? "num" : "" });
+      if (c instanceof Node) td.append(c); else td.textContent = c;
+      return td;
+    }))));
+    const thead = el("thead", {}, el("tr", {}, ...cab.map(([t, num]) => el("th", { className: num ? "num" : "", textContent: t }))));
+    card.append(el("div", { className: "tabela-wrap" }, el("table", {}, thead, tbody)));
+  }
+  return card;
+}
+
+function render() {
+  const box = document.getElementById("adversarios");
+  const ordem = j => (j.reserva ? 10 : 0) + Math.max(0, ORDEM_ROTA.indexOf(j.funcao));
+  box.replaceChildren(...[...scout.jogadores].sort((a, b) => ordem(a) - ordem(b)).map(cardJogador));
+}
+
+async function dataDragon() {
+  try {
+    const versoes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json").then(r => r.json());
+    const dados = await fetch(`https://ddragon.leagueoflegends.com/cdn/${versoes[0]}/data/pt_BR/champion.json`).then(r => r.json());
+    dd = { versao: versoes[0], porId: Object.fromEntries(Object.values(dados.data).map(c => [c.id.toLowerCase(), c])) };
+  } catch { /* sem ícones: mostra só os nomes */ }
+}
+
+document.querySelectorAll("#filas button").forEach(b => b.addEventListener("click", () => {
+  fila = b.dataset.fila;
+  document.querySelectorAll("#filas button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  if (scout?.proximo) render();
+}));
+document.querySelectorAll("#periodo button").forEach(b => b.addEventListener("click", () => {
+  dias = Number(b.dataset.dias);
+  document.querySelectorAll("#periodo button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  if (scout?.proximo) render();
+}));
+document.getElementById("min-partidas").addEventListener("change", e => {
+  minPartidas = Number(e.target.value);
+  if (scout?.proximo) render();
+});
+
+Promise.all([fetch("scout.json", { cache: "no-store" }).then(r => r.json()), dataDragon()])
+  .then(([s]) => {
+    scout = s;
+    const sub = document.getElementById("sub");
+    if (!s.proximo) { sub.textContent = "Nenhum próximo jogo marcado no CBLOW ainda."; return; }
+    const quando = new Date(s.proximo.quando).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const atualizado = new Date(s.atualizado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    document.getElementById("titulo").textContent = `Scout · ${s.proximo.time.nome}`;
+    sub.textContent = `Próximo jogo: ${quando} · ${s.proximo.fase} · melhor de ${s.proximo.melhor_de} · atualizado em ${atualizado}`;
+    if (s.desde) {
+      const [a, m, d] = s.desde.split("-");
+      document.getElementById("nota").prepend(`"Tudo" vai desde ${d}/${m}/${a}. `);
+    }
+    render();
+  })
+  .catch(() => { document.getElementById("sub").textContent = "Ainda não há dados do scout."; });
+</script>
+</body>
+</html>

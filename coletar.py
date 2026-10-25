@@ -26,6 +26,12 @@ ARQ_HISTORICO = RAIZ / "dados" / "historico.csv"
 ARQ_PARTIDAS = RAIZ / "dados" / "partidas.json"
 ARQ_SITE = RAIZ / "site" / "dados.json"
 ARQ_SITE_PARTIDAS = RAIZ / "site" / "partidas.json"
+# Scout do próximo adversário: Riot ID corrigido à mão (slug do jogador no CBLOW -> "Nick#TAG"),
+# partidas baixadas e o que vai para o site.
+ARQ_ADVERSARIOS = RAIZ / "adversarios.json"
+ARQ_PARTIDAS_ADV = RAIZ / "dados" / "partidas_adversarios.json"
+ARQ_SITE_SCOUT = RAIZ / "site" / "scout.json"
+PAUSA_SCOUT = 1.2  # a primeira coleta de um adversário baixa tudo desde 02/10; 100 chamadas a cada 2 minutos
 PASTA_FOTOS = RAIZ / "site" / "fotos"
 URL_FOTOS = "https://cdn.cblow.xyz/jogadores"  # fotos oficiais do CBLOW
 
@@ -168,13 +174,13 @@ def resumir_partida(mid, info, puuid, riot_id):
     }
 
 
-def atualizar_partidas(jogador, puuid, chave, partidas, pausa=0.0):
-    """Acrescenta em `partidas` as partidas solo e flex do jogador que ainda não estão lá."""
+def atualizar_partidas(jogador, puuid, chave, partidas, pausa=0.0, desde=INICIO_CAMPEONATO):
+    """Acrescenta em `partidas` as partidas solo e flex do jogador desde `desde` que ainda não estão lá."""
     rid = jogador["riot_id"].lower()
     conhecidas = {p["id"] for p in partidas if p["riot_id"].lower() == rid}
     _, regiao = rotas(jogador)
     base = f"https://{regiao}.api.riotgames.com/lol/match/v5/matches"
-    inicio_ts = int(datetime.combine(INICIO_CAMPEONATO, datetime.min.time(), BRASILIA).timestamp())
+    inicio_ts = int(datetime.combine(desde, datetime.min.time(), BRASILIA).timestamp())
 
     ids = []
     for fila in FILAS:
@@ -222,7 +228,7 @@ def normalizar(nome):
     return "".join(ch for ch in nome.lower() if ch.isalnum())
 
 
-def atualizar_campeonato(jogadores, partidas):
+def atualizar_campeonato(jogadores, partidas, time_slug=TIME_CBLOW):
     """Acrescenta em `partidas` os jogos oficiais do time no CBLOW que ainda não estão lá.
 
     A API do CBLOW não tem dano, ouro nem visão; esses campos ficam nulos. O fim do jogo
@@ -231,7 +237,7 @@ def atualizar_campeonato(jogadores, partidas):
     por_nick = {j["nome"].lower(): j for j in jogadores}
     conhecidas = {p["id"].split("_")[1] for p in partidas if p["fila"] == "campeonato"}
     series = [m for m in baixar_json(f"{API_CBLOW}/matches")
-              if m["status"] == "finalizada" and TIME_CBLOW in (m["team1"]["slug"], m["team2"]["slug"])
+              if m["status"] == "finalizada" and time_slug in (m["team1"]["slug"], m["team2"]["slug"])
               and str(m["id"]) not in conhecidas]
     if not series:
         return 0
@@ -266,6 +272,83 @@ def atualizar_campeonato(jogadores, partidas):
                 })
                 novas += 1
     return novas
+
+
+def riot_id_do_opgg(url):
+    """'.../summoners/br/REXPEITA-O-VOV%C3%94-BR1' -> 'REXPEITA O VOVÔ#BR1' (o op.gg troca espaço por hífen)."""
+    if not url:
+        return None
+    nome, _, tag = urllib.parse.unquote(url.rstrip("/").rsplit("/", 1)[1]).rpartition("-")
+    return f"{nome.replace('-', ' ')}#{tag}" if nome else None
+
+
+def proximo_adversario():
+    """(série, time adversário) do próximo jogo do time no CBLOW, ou None."""
+    series = [m for m in baixar_json(f"{API_CBLOW}/matches")
+              if m["status"] != "finalizada" and TIME_CBLOW in (m["team1"]["slug"], m["team2"]["slug"])]
+    if not series:
+        return None
+    serie = min(series, key=lambda m: m["scheduledAt"])
+    return serie, serie["team2"] if serie["team1"]["slug"] == TIME_CBLOW else serie["team1"]
+
+
+def atualizar_scout(chave, agora):
+    """Baixa as partidas do elenco do próximo adversário e gera site/scout.json."""
+    prox = proximo_adversario()
+    if prox is None:
+        ARQ_SITE_SCOUT.write_text(json.dumps({"atualizado_em": agora.isoformat(timespec="minutes"), "proximo": None}),
+                                  encoding="utf-8")
+        print("[scout] sem próximo jogo marcado no CBLOW")
+        return
+    serie, adversario = prox
+    correcoes = json.loads(ARQ_ADVERSARIOS.read_text(encoding="utf-8")) if ARQ_ADVERSARIOS.exists() else {}
+    elenco = [p for p in baixar_json(f"{API_CBLOW}/players")
+              if (p.get("team") or {}).get("slug") == adversario["slug"] and not p.get("quit")]
+
+    jogadores = []
+    for p in elenco:
+        rid = correcoes.get(p["slug"]) or riot_id_do_opgg(p.get("opggUrl"))
+        jogadores.append({"nome": p["nick"], "slug": p["slug"], "funcao": p["role"], "reserva": p["reserve"],
+                          "foto": p.get("avatarUrl") or "", "riot_id": rid or f"cblow:{p['slug']}", "erro": ""})
+    validos = {j["riot_id"].lower() for j in jogadores}
+    # Só fica o elenco do adversário atual; quando ele muda, o arquivo recomeça. Os jogos do
+    # campeonato são poucos e vêm de novo a cada coleta, para pegar quem teve o Riot ID corrigido.
+    partidas = [p for p in json.loads(ARQ_PARTIDAS_ADV.read_text(encoding="utf-8"))
+                if p["riot_id"].lower() in validos and p["fila"] != "campeonato"] if ARQ_PARTIDAS_ADV.exists() else []
+
+    # A aba tem filtro de últimos 30 dias: busca desde então, ou desde o início do campeonato se for antes.
+    desde = min(INICIO_CAMPEONATO, agora.date() - timedelta(days=30))
+    for j in jogadores:
+        if j["riot_id"].startswith("cblow:"):
+            j["erro"] = "sem Riot ID no CBLOW"
+            continue
+        try:
+            puuid = buscar_puuid(j, chave)
+            novas = atualizar_partidas(j, puuid, chave, partidas, pausa=PAUSA_SCOUT, desde=desde)
+            print(f"[scout] {j['nome']} ({j['riot_id']}): {novas} partidas novas")
+        except ChaveInvalida:
+            raise
+        except LookupError:
+            j["erro"] = "Riot ID não encontrado"
+            print(f"[scout] {j['nome']}: Riot ID {j['riot_id']} não encontrado (corrija em adversarios.json, chave {j['slug']})")
+        except Exception as e:
+            j["erro"] = "falha ao baixar partidas"
+            print(f"[scout] erro em {j['nome']}: {e}")
+    try:
+        print(f"[scout] {atualizar_campeonato(jogadores, partidas, adversario['slug'])} partidas no campeonato")
+    except Exception as e:
+        print(f"[scout] erro nos jogos do campeonato: {e}")
+
+    partidas.sort(key=lambda p: (p["fim"], p["riot_id"].lower()))
+    ARQ_PARTIDAS_ADV.write_text(json.dumps(partidas, ensure_ascii=False, indent=0), encoding="utf-8")
+    ARQ_SITE_SCOUT.write_text(json.dumps({
+        "atualizado_em": agora.isoformat(timespec="minutes"),
+        "desde": desde.isoformat(),
+        "proximo": {"quando": serie["scheduledAt"], "fase": serie["stage"], "melhor_de": serie["bestOf"],
+                    "time": {"nome": adversario["name"], "tag": adversario["tag"], "slug": adversario["slug"]}},
+        "jogadores": jogadores,
+        "partidas": partidas,
+    }, ensure_ascii=False), encoding="utf-8")
 
 
 def ler_historico():
@@ -402,6 +485,12 @@ def main():
     salvar_partidas(partidas)
     gerar_site(linhas, jogadores, agora)
     print(f"{len(jogadores) - falhas}/{len(jogadores)} jogadores atualizados em {hoje}.")
+
+    # Por último: uma falha no scout não pode atrapalhar a coleta do time.
+    try:
+        atualizar_scout(chave, agora)
+    except Exception as e:
+        print(f"[scout] erro: {e}")
     if falhas == len(jogadores):
         sys.exit(1)
 
