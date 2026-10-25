@@ -22,6 +22,8 @@ concurrency:
 jobs:
   coletar:
     runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: "1"   # o log aparece em tempo real em vez de só no fim do passo
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
