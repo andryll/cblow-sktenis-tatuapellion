@@ -32,6 +32,10 @@ ARQ_ADVERSARIOS = RAIZ / "adversarios.json"
 ARQ_PARTIDAS_ADV = RAIZ / "dados" / "partidas_adversarios.json"
 ARQ_SITE_SCOUT = RAIZ / "site" / "scout.json"
 PAUSA_SCOUT = 1.2  # a primeira coleta de um adversário baixa tudo desde 02/10; 100 chamadas a cada 2 minutos
+# Rodízio do time (regras do CBLOW, art. 2): quem entrou no elenco depois do início (slug -> data)
+# e o que vai para o site.
+ARQ_RODIZIO = RAIZ / "rodizio.json"
+ARQ_SITE_RODIZIO = RAIZ / "site" / "rodizio.json"
 PASTA_FOTOS = RAIZ / "site" / "fotos"
 URL_FOTOS = "https://cdn.cblow.xyz/jogadores"  # fotos oficiais do CBLOW
 
@@ -351,6 +355,50 @@ def atualizar_scout(chave, agora):
     }, ensure_ascii=False), encoding="utf-8")
 
 
+def gerar_rodizio(agora):
+    """Gera site/rodizio.json: elenco do time no CBLOW, escalação de cada jogo oficial e o próximo jogo.
+
+    A regra do rodízio (quem é obrigado a jogar) é calculada na página, a partir desses dados.
+    """
+    config = json.loads(ARQ_RODIZIO.read_text(encoding="utf-8")) if ARQ_RODIZIO.exists() else {}
+    entradas = config.get("entradas", {})
+    def foto(p):  # a foto já baixada para o site, ou a do CBLOW
+        local = arquivo_foto({"nome": p["nick"]})
+        return f"fotos/{local.name}" if local.exists() else p.get("avatarUrl") or ""
+    elenco = [{"nick": p["nick"], "slug": p["slug"], "funcao": p["role"], "foto": foto(p),
+               "pe_de_chumbo": bool(p.get("peDeChumbo")), "entrada": entradas.get(p["slug"])}
+              for p in baixar_json(f"{API_CBLOW}/players")
+              if (p.get("team") or {}).get("slug") == TIME_CBLOW and not p.get("quit")]
+
+    series = sorted((m for m in baixar_json(f"{API_CBLOW}/matches")
+                     if TIME_CBLOW in (m["team1"]["slug"], m["team2"]["slug"])), key=lambda m: m["scheduledAt"])
+    campeoes = ids_campeoes()
+    jogos, proximo = [], None
+    for m in series:
+        nosso, outro = (m["team1"], m["team2"]) if m["team1"]["slug"] == TIME_CBLOW else (m["team2"], m["team1"])
+        if m["status"] != "finalizada":
+            if proximo is None:
+                proximo = {"quando": m["scheduledAt"], "fase": m["stage"], "melhor_de": m["bestOf"],
+                           "adversario": {"nome": outro["name"], "tag": outro["tag"]}}
+            continue
+        detalhe = baixar_json(f"{API_CBLOW}/matches/{m['id']}")
+        for jogo in sorted(detalhe["games"], key=lambda g: g["number"]):
+            carta = jogo.get("card1") if jogo.get("blueId") == nosso["id"] else jogo.get("card2")
+            jogos.append({
+                "id": f"{m['id']}_{jogo['number']}", "quando": m["scheduledAt"], "fase": m["stage"],
+                "adversario": {"nome": outro["name"], "tag": outro["tag"]},
+                "vitoria": jogo["winnerId"] == nosso["id"], "carta": (carta or {}).get("name", ""),
+                "escalacao": [{"slug": l["player"]["slug"], "nick": l["player"]["nick"],
+                               "campeao": campeoes.get(normalizar(l["champion"]), l["champion"])}
+                              for l in jogo["lines"] if l["teamId"] == nosso["id"]],
+            })
+    ARQ_SITE_RODIZIO.write_text(json.dumps({
+        "atualizado_em": agora.isoformat(timespec="minutes"),
+        "elenco": elenco, "jogos": jogos, "proximo": proximo,
+    }, ensure_ascii=False), encoding="utf-8")
+    print(f"[rodízio] {len(elenco)} no elenco, {len(jogos)} jogos oficiais")
+
+
 def ler_historico():
     if not ARQ_HISTORICO.exists():
         return []
@@ -486,7 +534,11 @@ def main():
     gerar_site(linhas, jogadores, agora)
     print(f"{len(jogadores) - falhas}/{len(jogadores)} jogadores atualizados em {hoje}.")
 
-    # Por último: uma falha no scout não pode atrapalhar a coleta do time.
+    # Por último: uma falha no rodízio ou no scout não pode atrapalhar a coleta do time.
+    try:
+        gerar_rodizio(agora)
+    except Exception as e:
+        print(f"[rodízio] erro: {e}")
     try:
         atualizar_scout(chave, agora)
     except Exception as e:
