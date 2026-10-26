@@ -181,10 +181,14 @@ Promise.all([fetch("scout.json", { cache: "no-store" }).then(r => r.json()), dat
     scout = s;
     const sub = document.getElementById("sub");
     if (!s.proximo) { sub.textContent = "Nenhum próximo jogo marcado no CBLOW ainda."; return; }
-    const quando = new Date(s.proximo.quando).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
     const atualizado = new Date(s.atualizado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
     document.getElementById("titulo").textContent = `Scout · ${s.proximo.time.nome}`;
-    sub.textContent = `Próximo jogo: ${quando} · ${s.proximo.fase} · melhor de ${s.proximo.melhor_de} · atualizado em ${atualizado}`;
+    if (s.proximo.quando) {
+      const quando = new Date(s.proximo.quando).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+      sub.textContent = `Próximo jogo: ${quando} · ${s.proximo.fase} · melhor de ${s.proximo.melhor_de} · atualizado em ${atualizado}`;
+    } else {
+      sub.textContent = `Jogo ainda não marcado no CBLOW · atualizado em ${atualizado}`;
+    }
     if (s.desde) {
       const [a, m, d] = s.desde.split("-");
       document.getElementById("nota").prepend(`"Tudo" vai desde ${d}/${m}/${a}. `);

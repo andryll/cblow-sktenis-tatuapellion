@@ -29,6 +29,7 @@ ARQ_SITE_PARTIDAS = RAIZ / "site" / "partidas.json"
 # Scout do próximo adversário: Riot ID corrigido à mão (slug do jogador no CBLOW -> "Nick#TAG"),
 # partidas baixadas e o que vai para o site.
 ARQ_ADVERSARIOS = RAIZ / "adversarios.json"
+ARQ_PROXIMO_ADVERSARIO = RAIZ / "proximo_adversario.json"  # força o adversário do scout
 ARQ_PARTIDAS_ADV = RAIZ / "dados" / "partidas_adversarios.json"
 ARQ_SITE_SCOUT = RAIZ / "site" / "scout.json"
 PAUSA_SCOUT = 1.2  # a primeira coleta de um adversário baixa tudo desde 02/10; 100 chamadas a cada 2 minutos
@@ -287,9 +288,22 @@ def riot_id_do_opgg(url):
 
 
 def proximo_adversario():
-    """(série, time adversário) do próximo jogo do time no CBLOW, ou None."""
-    series = [m for m in baixar_json(f"{API_CBLOW}/matches")
-              if m["status"] != "finalizada" and TIME_CBLOW in (m["team1"]["slug"], m["team2"]["slug"])]
+    """(série, time adversário) do próximo jogo do time no CBLOW, ou None.
+
+    Com um slug em proximo_adversario.json, o scout fica nesse time; a série é o próximo
+    jogo contra ele, ou None se o CBLOW ainda não marcou.
+    """
+    todas = baixar_json(f"{API_CBLOW}/matches")
+    series = [m for m in todas if m["status"] != "finalizada" and TIME_CBLOW in (m["team1"]["slug"], m["team2"]["slug"])]
+    forcado = (json.loads(ARQ_PROXIMO_ADVERSARIO.read_text(encoding="utf-8")).get("slug")
+               if ARQ_PROXIMO_ADVERSARIO.exists() else None)
+    if forcado:
+        series = [m for m in series if forcado in (m["team1"]["slug"], m["team2"]["slug"])]
+        if not series:
+            time = next((t for m in todas for t in (m["team1"], m["team2"]) if t["slug"] == forcado), None)
+            if time is None:
+                raise LookupError(f"time {forcado} (proximo_adversario.json) não existe no CBLOW")
+            return None, time
     if not series:
         return None
     serie = min(series, key=lambda m: m["scheduledAt"])
@@ -348,7 +362,8 @@ def atualizar_scout(chave, agora):
     ARQ_SITE_SCOUT.write_text(json.dumps({
         "atualizado_em": agora.isoformat(timespec="minutes"),
         "desde": desde.isoformat(),
-        "proximo": {"quando": serie["scheduledAt"], "fase": serie["stage"], "melhor_de": serie["bestOf"],
+        "proximo": {"quando": serie and serie["scheduledAt"], "fase": serie and serie["stage"],
+                    "melhor_de": serie and serie["bestOf"],
                     "time": {"nome": adversario["name"], "tag": adversario["tag"], "slug": adversario["slug"]}},
         "jogadores": jogadores,
         "partidas": partidas,
