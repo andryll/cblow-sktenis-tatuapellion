@@ -62,7 +62,7 @@
   <section class="card">
     <h2>Quem jogou cada partida</h2>
     <div class="tabela-wrap"><table id="historico"></table></div>
-    <p class="nota">Ícone = jogou, com o campeão. Colunas da mesma cor são do mesmo ciclo; o jogo que completa um ciclo também abre o seguinte.</p>
+    <p class="nota">Ícone = jogou, com o campeão. Colunas da mesma cor são do mesmo ciclo; depois do jogo que completa um ciclo, o seguinte começa do zero.</p>
   </section>
 
   <p class="nota">Regras do CBLOW, art. 2 (<a href="https://cblow.xyz/regras">cblow.xyz/regras</a>): rodízio obrigatório a cada partida (§2.1);
@@ -92,7 +92,7 @@ function icone(nome) {
 // Percorre os jogos em ordem e acompanha quem ainda falta jogar no ciclo (§2.3).
 // - O Pé de Chumbo (§2.4) não entra na conta: joga sempre.
 // - Quem entra no elenco depois (rodizio.json) passa a faltar a partir da data de entrada.
-// - Quando o último que faltava joga, o ciclo fecha e esse mesmo jogo já conta para o próximo.
+// - Quando o último que faltava joga, o ciclo fecha; o próximo ciclo começa do zero no jogo seguinte.
 // - No primeiro jogo dos playoffs a fila zera (§2.5).
 function calcular(dados) {
   const rodam = dados.elenco.filter(p => !p.pe_de_chumbo);
@@ -117,8 +117,8 @@ function calcular(dados) {
     if (!pendentes.size) {
       ciclo++;
       j.fechou = true;
-      conhecidos.forEach(s => { if (!escalados.has(s)) pendentes.add(s); });
-      inicio = j;
+      conhecidos.forEach(s => pendentes.add(s));
+      inicio = null;
     }
   }
   entra(diaBrasilia(new Date().toISOString()));
@@ -166,10 +166,11 @@ function render(dados) {
 
   const partes = [];
   if (inicio) {
-    const ja = [...new Set(dados.jogos.filter(j => j.ciclo === ciclo || (j.fechou && j.ciclo === ciclo - 1))
-      .flatMap(j => j.escalacao.map(e => e.nick)))];
+    const ja = [...new Set(dados.jogos.filter(j => j.ciclo === ciclo).flatMap(j => j.escalacao.map(e => e.nick)))];
     partes.push(`Ciclo ${ciclo}, aberto no jogo de ${dataCurta(inicio.quando)} contra ${inicio.adversario.nome}.`);
     if (ja.length) partes.push(`Já jogaram neste ciclo: ${ja.join(", ")}.`);
+  } else if (dados.jogos.length) {
+    partes.push(`O ciclo ${ciclo - 1} fechou no último jogo; o ciclo ${ciclo} começa no próximo, com todos pendentes.`);
   }
   if (ultimo) partes.push(`A escalação não pode ser igual à do último jogo (${ultimo.escalacao.map(e => e.nick).join(", ")}): pelo menos uma troca (§2.1).`);
   document.getElementById("explica").textContent = partes.join(" ");
@@ -177,7 +178,7 @@ function render(dados) {
   // Histórico: jogadores nas linhas, jogos nas colunas, cor alternada por ciclo.
   const cor = j => (j.ciclo % 2 ? "" : "par");
   const linhaCiclos = el("tr", { className: "ciclos" }, el("th"),
-    ...dados.jogos.map(j => el("th", { className: cor(j), textContent: j.fechou ? `fecha ${j.ciclo}, abre ${j.ciclo + 1}` : `ciclo ${j.ciclo}` })),
+    ...dados.jogos.map(j => el("th", { className: cor(j), textContent: j.fechou ? `ciclo ${j.ciclo} (fecha)` : `ciclo ${j.ciclo}` })),
     el("th"));
   const linhaJogos = el("tr", {}, el("th", { textContent: "Atleta" }), ...dados.jogos.map(j => el("th", { className: `jogo ${cor(j)}` },
     el("span", { textContent: dataCurta(j.quando) }), el("span", { className: "adv", textContent: j.adversario.tag }),
