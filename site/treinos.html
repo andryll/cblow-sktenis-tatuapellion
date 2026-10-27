@@ -53,7 +53,7 @@
   <header>
     <img src="fotos/time.webp" alt="">
     <div>
-      <h1>SKTenis Tatuapellion · Treinos</h1>
+      <h1 id="titulo">SKTenis Tatuapellion · Treinos</h1>
       <p class="sub" id="sub">Conteúdo criptografado: só abre com a senha.</p>
     </div>
   </header>
@@ -84,7 +84,8 @@
         <button type="button" data-dias="30">Últimos 30 dias</button>
         <button type="button" data-dias="0" aria-pressed="true">Tudo</button>
       </div>
-      <label>Adversário <select id="adversario"></select></label>
+      <label>Time <select id="time"></select></label>
+      <label>Contra <select id="adversario"></select></label>
       <label>Mínimo de partidas
         <select id="min-partidas">
           <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option>
@@ -99,7 +100,7 @@
       <h2>Jogos de treino</h2>
       <div class="tabela-wrap"><table id="tab-jogos"></table></div>
     </section>
-    <p class="nota">Dados passados das prints dos treinos. Quando a print não mostra um número (dano, CS), ele fica de fora da conta.</p>
+    <p class="nota">Scout dos treinos (scrims) dos adversários, passado das prints. Quando a print não mostra um número (dano, CS, duração), ele fica de fora da conta. Foto e função vêm do elenco do CBLOW quando o time é o mesmo da aba Scout.</p>
   </div>
 </main>
 
@@ -107,7 +108,7 @@
 const CHAVE_SESSAO = "treinos-senha";
 const ROTA = { top: "Top", jungle: "Jungle", mid: "Mid", adc: "ADC", support: "Suporte" };
 const ORDEM = ["top", "jungle", "mid", "adc", "suporte", "support"];
-let pacote = null, treinos = null, elenco = [], dias = 0, adversario = "", minPartidas = 1;
+let pacote = null, treinos = null, scout = null, time = "", dias = 0, adversario = "", minPartidas = 1;
 let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
 
 const el = (tag, props = {}, ...filhos) => {
@@ -119,6 +120,7 @@ const fmt = (v, casas = 1) => v.toLocaleString("pt-BR", { minimumFractionDigits:
 const pct = (v, t) => (t ? `${Math.round(100 * v / t)}%` : "—");
 const bytes = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 const chaveNome = n => n.toLowerCase();
+const normal = n => (n || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
 function campeao(nome) {
   const c = dd.porId[nome.toLowerCase().replace(/[^a-z0-9]/g, "")];
@@ -135,9 +137,10 @@ function celCampeao(nome) {
 
 // Partidas sem dano ou sem duração não entram no dano por minuto.
 function somar(lista) {
-  const s = { n: lista.length, v: 0, k: 0, d: 0, a: 0, dano: 0, minDano: 0 };
+  const s = { n: lista.length, v: 0, k: 0, d: 0, a: 0, dano: 0, minDano: 0, cs: 0, nCs: 0 };
   for (const p of lista) {
     s.v += p.vitoria ? 1 : 0; s.k += p.abates; s.d += p.mortes; s.a += p.assistencias;
+    if (p.cs != null) { s.cs += p.cs; s.nCs++; }
     if (p.dano != null && p.duracao) { s.dano += p.dano; s.minDano += p.duracao / 60; }
   }
   s.kda = (s.k + s.a) / Math.max(1, s.d);
@@ -147,7 +150,16 @@ const kdaTexto = s => `${fmt(s.k / s.n)} / ${fmt(s.d / s.n)} / ${fmt(s.a / s.n)}
 
 function jogosFiltrados() {
   const limite = dias ? new Date(Date.now() - dias * 864e5).toISOString().slice(0, 10) : "";
-  return treinos.jogos.filter(j => (!limite || j.data >= limite) && (!adversario || j.adversario === adversario));
+  return doTime().filter(j => (!limite || j.data >= limite) && (!adversario || j.adversario === adversario));
+}
+
+const doTime = () => treinos.jogos.filter(j => normal(j.time) === normal(time));
+
+// Foto e função do elenco do CBLOW, quando o time dos treinos é o adversário da aba Scout.
+function elenco() {
+  const p = scout?.proximo;
+  if (!p || normal(p.time.nome) !== normal(time)) return [];
+  return scout.jogadores.map(j => ({ nome: j.nome, funcao: j.funcao, foto: j.foto }));
 }
 
 // Uma linha por atleta por jogo, no formato das partidas do Scout.
@@ -174,11 +186,14 @@ function cardAtleta(a, todas) {
     .filter(l => l.s.n >= minPartidas)
     .sort((x, y) => y.s.n - x.s.n || y.s.v / y.s.n - x.s.v / x.s.n);
   if (tabela.length) {
-    const cab = [["Campeão"], ["Partidas", 1], ["Winrate", 1], ["KDA", 1], ["Dano/min", 1]];
+    // Dano/min só aparece quando alguma print do treino trouxe dano e duração.
+    const temDano = tabela.some(l => l.s.minDano);
+    const cab = [["Campeão"], ["Partidas", 1], ["Winrate", 1], ["KDA", 1], ["CS", 1], ...(temDano ? [["Dano/min", 1]] : [])];
     const tbody = el("tbody", {}, ...tabela.map(({ nome, s }) => el("tr", {}, ...[
       celCampeao(nome), String(s.n), `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)`,
       el("span", { textContent: fmt(s.kda, 2), title: kdaTexto(s) }),
-      s.minDano ? fmt(s.dano / s.minDano, 0) : "—",
+      s.nCs ? String(Math.round(s.cs / s.nCs)) : "—",
+      ...(temDano ? [s.minDano ? fmt(s.dano / s.minDano, 0) : "—"] : []),
     ].map((c, i) => {
       const td = el("td", { className: cab[i][1] ? "num" : "" });
       if (c instanceof Node) td.append(c); else td.textContent = c;
@@ -191,7 +206,7 @@ function cardAtleta(a, todas) {
 }
 
 function tabelaJogos(jogos) {
-  const cab = ["Data", "Adversário", "Resultado", "Duração", "Escalação"];
+  const cab = ["Data", "Contra", "Resultado", "Duração", "Escalação"];
   const linhasTab = [...jogos].sort((a, b) => b.data.localeCompare(a.data)).map(j => {
     const [, m, d] = j.data.split("-");
     const esc = el("span", { className: "escalacao" }, ...j.jogadores.map(x => {
@@ -216,13 +231,15 @@ function tabelaJogos(jogos) {
 function render() {
   const jogos = jogosFiltrados();
   const todas = linhas(jogos);
-  // Elenco do site primeiro (com foto e função); quem só aparece nos treinos entra no fim.
-  const atletas = [...elenco];
-  for (const p of linhas(treinos.jogos)) {
+  // Elenco do CBLOW primeiro (com foto e função); quem só aparece nos treinos entra com a rota da print.
+  const doTimeTodo = linhas(doTime());
+  const atletas = [...elenco()];
+  for (const p of doTimeTodo) {
     if (!atletas.some(a => chaveNome(a.nome) === chaveNome(p.nome))) atletas.push({ nome: p.nome, funcao: p.rota || "" });
   }
   const ordem = a => { const i = ORDEM.indexOf((a.funcao || "").split("/")[0].toLowerCase()); return i < 0 ? 9 : i; };
-  const comTreino = atletas.filter(a => linhas(treinos.jogos).some(p => chaveNome(p.nome) === chaveNome(a.nome)));
+  const comTreino = atletas.filter(a => doTimeTodo.some(p => chaveNome(p.nome) === chaveNome(a.nome)));
+  document.getElementById("titulo").textContent = `Treinos · ${time}`;
   document.getElementById("atletas").replaceChildren(...comTreino.sort((a, b) => ordem(a) - ordem(b)).map(a => cardAtleta(a, todas)));
   tabelaJogos(jogos);
   const v = jogos.filter(j => j.vitoria).length;
@@ -231,9 +248,21 @@ function render() {
 }
 
 function preencherAdversarios() {
-  const nomes = [...new Set(treinos.jogos.map(j => j.adversario).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  adversario = "";
+  const nomes = [...new Set(doTime().map(j => j.adversario).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
   document.getElementById("adversario").replaceChildren(el("option", { value: "", textContent: "Todos" }),
     ...nomes.map(n => el("option", { value: n, textContent: n })));
+}
+
+// Começa no próximo adversário da aba Scout, se houver treino dele; senão, no time do treino mais recente.
+function preencherTimes() {
+  const nomes = [...new Set(treinos.jogos.map(j => j.time))];
+  const recente = [...treinos.jogos].sort((a, b) => b.data.localeCompare(a.data))[0];
+  const proximo = nomes.find(n => normal(n) === normal(scout?.proximo?.time?.nome));
+  time = proximo || recente?.time || "";
+  document.getElementById("time").replaceChildren(...nomes.sort((a, b) => a.localeCompare(b, "pt-BR"))
+    .map(n => el("option", { value: n, textContent: n, selected: n === time })));
+  preencherAdversarios();
 }
 
 async function decifrar(senha) {
@@ -254,7 +283,7 @@ async function tentar(senha, lembrar) {
   try {
     treinos = await decifrar(senha);
     if (lembrar) { try { sessionStorage.setItem(CHAVE_SESSAO, senha); } catch {} }
-    preencherAdversarios();
+    preencherTimes();
     document.getElementById("trava").hidden = true;
     document.getElementById("aberto").hidden = false;
     render();
@@ -303,16 +332,17 @@ document.querySelectorAll("#periodo button").forEach(b => b.addEventListener("cl
   document.querySelectorAll("#periodo button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
   if (treinos) render();
 }));
+document.getElementById("time").addEventListener("change", e => { time = e.target.value; preencherAdversarios(); if (treinos) render(); });
 document.getElementById("adversario").addEventListener("change", e => { adversario = e.target.value; if (treinos) render(); });
 document.getElementById("min-partidas").addEventListener("change", e => { minPartidas = Number(e.target.value); if (treinos) render(); });
 
 Promise.all([
   fetch("treinos.json", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
-  fetch("dados.json", { cache: "no-store" }).then(r => r.json()).catch(() => ({ jogadores: [] })),
+  fetch("scout.json", { cache: "no-store" }).then(r => r.json()).catch(() => null),
   dataDragon(),
 ]).then(([p, d]) => {
   pacote = p;
-  elenco = d.jogadores.map(j => ({ nome: j.nome, funcao: j.funcao, foto: j.foto }));
+  scout = d;
   let salva = null;
   try { salva = sessionStorage.getItem(CHAVE_SESSAO); } catch {}
   if (salva) tentar(salva, true);

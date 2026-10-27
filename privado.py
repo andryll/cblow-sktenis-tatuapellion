@@ -1,4 +1,4 @@
-"""Criptografa os dados da aba Treinos.
+"""Criptografa os dados da aba Treinos (scout dos treinos dos adversários).
 
 Uso:
     SENHA_PRIVADO=... python privado.py caminho/para/treinos.json
@@ -9,8 +9,9 @@ vai para o git. AES-256-GCM com chave derivada da senha por PBKDF2-SHA256: a pá
 decifra no navegador com a Web Crypto, sem mandar a senha para lugar nenhum.
 
 Formato de treinos.json (campos numéricos podem ser null quando a print não mostra):
-    {"jogos": [{"data": "AAAA-MM-DD", "adversario": "Time", "vitoria": true, "duracao": "28:15",
-                "jogadores": [{"nome": "KarlinRox", "campeao": "Sion", "rota": "top",
+    {"jogos": [{"data": "AAAA-MM-DD", "time": "SUCATA IN BOX", "adversario": "VOS BRONZES",
+                "vitoria": true, "duracao": "28:15",
+                "jogadores": [{"nome": "RAMMUS", "campeao": "Shyvana", "rota": "jungle",
                                "abates": 1, "mortes": 2, "assistencias": 3, "cs": 150, "dano": 12000}]}]}
 """
 
@@ -49,7 +50,7 @@ def segundos(duracao):
 def validar(treinos):
     """Confere o mínimo de cada jogo, para um erro de digitação não quebrar a página."""
     for i, jogo in enumerate(treinos["jogos"], 1):
-        for campo in ("data", "vitoria", "jogadores"):
+        for campo in ("data", "time", "vitoria", "jogadores"):
             if campo not in jogo:
                 sys.exit(f"[treinos] jogo {i}: falta o campo {campo!r}")
         jogo["duracao"] = segundos(jogo.get("duracao"))
