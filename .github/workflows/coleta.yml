@@ -24,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHONUNBUFFERED: "1"   # o log aparece em tempo real em vez de só no fim do passo
+      TEM_PRIVADO: ${{ secrets.TOKEN_PRIVADO != '' && secrets.SENHA_PRIVADO != '' }}
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -55,6 +56,25 @@ jobs:
           git diff --cached --quiet || git commit -m "Elo de $(TZ=America/Sao_Paulo date '+%F %H:%M')"
           git pull --rebase --quiet   # alguém pode ter subido código durante a coleta
           git push
+
+      # Aba Treinos: os dados vêm do repositório privado e só a versão criptografada é publicada
+      # (site/treinos.json não vai para o git).
+      - name: Baixar os dados da aba Treinos
+        if: env.TEM_PRIVADO == 'true'
+        uses: actions/checkout@v5
+        with:
+          repository: andryll/cblow-privado
+          token: ${{ secrets.TOKEN_PRIVADO }}
+          path: privado-fonte
+
+      - name: Criptografar a aba Treinos
+        if: env.TEM_PRIVADO == 'true'
+        env:
+          SENHA_PRIVADO: ${{ secrets.SENHA_PRIVADO }}
+        run: |
+          pip install --quiet cryptography
+          python privado.py privado-fonte/treinos.json
+          rm -rf privado-fonte
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

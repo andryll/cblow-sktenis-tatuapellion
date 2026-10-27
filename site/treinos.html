@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SKTenis Treinos</title>
+<link rel="icon" type="image/webp" href="fotos/time.webp">
+<link rel="stylesheet" href="estilo.css">
+<style>
+  .trava { max-width: 420px; }
+  .trava form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .trava input[type="password"] {
+    flex: 1 1 200px; font: inherit; color: var(--ink); background: var(--page);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+  }
+  .trava button {
+    font: inherit; font-weight: 600; color: var(--page); background: var(--ink);
+    border: 0; border-radius: 8px; padding: 8px 16px; cursor: pointer;
+  }
+  .trava button:disabled { opacity: 0.6; cursor: wait; }
+  .trava label.lembrar { flex-basis: 100%; color: var(--ink-2); font-size: 14px; }
+  .trava .erro { color: var(--down); font-size: 14px; margin: 10px 0 0; }
+
+  .controles-scout { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .controles-scout .filtros { margin: 0; }
+  .controles-scout label { color: var(--ink-2); font-size: 14px; }
+  .controles-scout select {
+    font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; margin-left: 4px;
+  }
+  .controles-scout .trancar {
+    margin-left: auto; font: inherit; font-size: 14px; color: var(--ink-2); background: transparent;
+    border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; cursor: pointer;
+  }
+  .adversarios { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); }
+  .adv .topo { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .adv .foto { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex: none; background: var(--grid); }
+  .adv .nome { font-weight: 600; }
+  .adv .funcao { color: var(--muted); font-size: 13px; margin-left: auto; align-self: flex-start; text-align: right; }
+  .adv .resumo { color: var(--ink-2); font-size: 14px; margin-bottom: 4px; }
+  .adv .tabela-wrap { margin-top: 6px; }
+  #sec-jogos { margin-top: 16px; }
+  .escalacao { display: flex; gap: 4px; flex-wrap: wrap; }
+  .escalacao img { width: 26px; height: 26px; border-radius: 6px; }
+  .res { font-weight: 600; }
+  .res.v { color: var(--up); }
+  .res.d { color: var(--down); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="fotos/time.webp" alt="">
+    <div>
+      <h1>SKTenis Tatuapellion · Treinos</h1>
+      <p class="sub" id="sub">Conteúdo criptografado: só abre com a senha.</p>
+    </div>
+  </header>
+  <nav class="abas">
+    <a href="./">Elo</a>
+    <a href="desempenho.html">Desempenho SoloQ</a>
+    <a href="geral.html">Desempenho geral</a>
+    <a href="partidas.html">Últimas partidas</a>
+    <a href="rodizio.html">Rodízio</a>
+    <a href="scout.html">Scout</a>
+    <a href="treinos.html" aria-current="page">🔒 Treinos</a>
+  </nav>
+
+  <section class="card trava" id="trava">
+    <h2>Digite a senha</h2>
+    <form id="form">
+      <input type="password" id="senha" autocomplete="current-password" aria-label="Senha" required>
+      <button type="submit" id="abrir">Abrir</button>
+      <label class="lembrar"><input type="checkbox" id="lembrar"> Manter aberto até fechar esta aba do navegador</label>
+    </form>
+    <p class="erro" id="erro" hidden></p>
+  </section>
+
+  <div id="aberto" hidden>
+    <div class="controles-scout">
+      <div class="filtros" id="periodo" role="group" aria-label="Período">
+        <button type="button" data-dias="7">Últimos 7 dias</button>
+        <button type="button" data-dias="30">Últimos 30 dias</button>
+        <button type="button" data-dias="0" aria-pressed="true">Tudo</button>
+      </div>
+      <label>Adversário <select id="adversario"></select></label>
+      <label>Mínimo de partidas
+        <select id="min-partidas">
+          <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option>
+        </select>
+      </label>
+      <button type="button" class="trancar" id="trancar">🔒 Trancar</button>
+    </div>
+
+    <section class="adversarios" id="atletas"></section>
+
+    <section class="card" id="sec-jogos">
+      <h2>Jogos de treino</h2>
+      <div class="tabela-wrap"><table id="tab-jogos"></table></div>
+    </section>
+    <p class="nota">Dados passados das prints dos treinos. Quando a print não mostra um número (dano, CS), ele fica de fora da conta.</p>
+  </div>
+</main>
+
+<script>
+const CHAVE_SESSAO = "treinos-senha";
+const ROTA = { top: "Top", jungle: "Jungle", mid: "Mid", adc: "ADC", support: "Suporte" };
+const ORDEM = ["top", "jungle", "mid", "adc", "suporte", "support"];
+let pacote = null, treinos = null, elenco = [], dias = 0, adversario = "", minPartidas = 1;
+let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
+
+const el = (tag, props = {}, ...filhos) => {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...filhos);
+  return e;
+};
+const fmt = (v, casas = 1) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+const pct = (v, t) => (t ? `${Math.round(100 * v / t)}%` : "—");
+const bytes = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+const chaveNome = n => n.toLowerCase();
+
+function campeao(nome) {
+  const c = dd.porId[nome.toLowerCase().replace(/[^a-z0-9]/g, "")];
+  return { nome: c?.name || nome, icone: c && dd.versao ? `https://ddragon.leagueoflegends.com/cdn/${dd.versao}/img/champion/${c.id}.png` : null };
+}
+
+function celCampeao(nome) {
+  const c = campeao(nome);
+  const box = el("span", { className: "camp" });
+  if (c.icone) box.append(el("img", { src: c.icone, alt: "", loading: "lazy" }));
+  box.append(c.nome);
+  return box;
+}
+
+// Partidas sem dano ou sem duração não entram no dano por minuto.
+function somar(lista) {
+  const s = { n: lista.length, v: 0, k: 0, d: 0, a: 0, dano: 0, minDano: 0 };
+  for (const p of lista) {
+    s.v += p.vitoria ? 1 : 0; s.k += p.abates; s.d += p.mortes; s.a += p.assistencias;
+    if (p.dano != null && p.duracao) { s.dano += p.dano; s.minDano += p.duracao / 60; }
+  }
+  s.kda = (s.k + s.a) / Math.max(1, s.d);
+  return s;
+}
+const kdaTexto = s => `${fmt(s.k / s.n)} / ${fmt(s.d / s.n)} / ${fmt(s.a / s.n)}`;
+
+function jogosFiltrados() {
+  const limite = dias ? new Date(Date.now() - dias * 864e5).toISOString().slice(0, 10) : "";
+  return treinos.jogos.filter(j => (!limite || j.data >= limite) && (!adversario || j.adversario === adversario));
+}
+
+// Uma linha por atleta por jogo, no formato das partidas do Scout.
+function linhas(jogos) {
+  return jogos.flatMap(j => j.jogadores.map(x => ({ ...x, vitoria: j.vitoria, duracao: j.duracao, data: j.data })));
+}
+
+function cardAtleta(a, todas) {
+  const minhas = todas.filter(p => chaveNome(p.nome) === chaveNome(a.nome));
+  const s = somar(minhas);
+  const foto = el("img", { className: "foto", alt: "" });
+  if (a.foto) foto.src = a.foto;
+  const card = el("article", { className: "card adv" },
+    el("div", { className: "topo" }, foto, el("div", { className: "nome", textContent: a.nome }),
+      el("div", { className: "funcao", textContent: ROTA[a.funcao] || a.funcao || "" })),
+    el("div", { className: "resumo", textContent: s.n
+      ? `${s.n} ${s.n === 1 ? "treino" : "treinos"} · ${pct(s.v, s.n)} de winrate (${s.v}V ${s.n - s.v}D) · KDA ${fmt(s.kda, 2)}`
+      : "Nenhum treino nesse filtro." }));
+
+  const grupos = {};
+  minhas.forEach(p => (grupos[p.campeao] ||= []).push(p));
+  const tabela = Object.entries(grupos)
+    .map(([nome, ps]) => ({ nome, s: somar(ps) }))
+    .filter(l => l.s.n >= minPartidas)
+    .sort((x, y) => y.s.n - x.s.n || y.s.v / y.s.n - x.s.v / x.s.n);
+  if (tabela.length) {
+    const cab = [["Campeão"], ["Partidas", 1], ["Winrate", 1], ["KDA", 1], ["Dano/min", 1]];
+    const tbody = el("tbody", {}, ...tabela.map(({ nome, s }) => el("tr", {}, ...[
+      celCampeao(nome), String(s.n), `${pct(s.v, s.n)} (${s.v}V ${s.n - s.v}D)`,
+      el("span", { textContent: fmt(s.kda, 2), title: kdaTexto(s) }),
+      s.minDano ? fmt(s.dano / s.minDano, 0) : "—",
+    ].map((c, i) => {
+      const td = el("td", { className: cab[i][1] ? "num" : "" });
+      if (c instanceof Node) td.append(c); else td.textContent = c;
+      return td;
+    }))));
+    const thead = el("thead", {}, el("tr", {}, ...cab.map(([t, num]) => el("th", { className: num ? "num" : "", textContent: t }))));
+    card.append(el("div", { className: "tabela-wrap" }, el("table", {}, thead, tbody)));
+  }
+  return card;
+}
+
+function tabelaJogos(jogos) {
+  const cab = ["Data", "Adversário", "Resultado", "Duração", "Escalação"];
+  const linhasTab = [...jogos].sort((a, b) => b.data.localeCompare(a.data)).map(j => {
+    const [, m, d] = j.data.split("-");
+    const esc = el("span", { className: "escalacao" }, ...j.jogadores.map(x => {
+      const c = campeao(x.campeao);
+      const titulo = `${x.nome}: ${c.nome} · ${x.abates}/${x.mortes}/${x.assistencias}`;
+      return c.icone ? el("img", { src: c.icone, alt: titulo, title: titulo, loading: "lazy" }) : el("span", { textContent: x.nome, title: titulo });
+    }));
+    return [`${d}/${m}`, j.adversario || "—",
+      el("span", { className: `res ${j.vitoria ? "v" : "d"}`, textContent: j.vitoria ? "Vitória" : "Derrota" }),
+      j.duracao ? `${Math.floor(j.duracao / 60)}min` : "—", esc];
+  });
+  const thead = el("thead", {}, el("tr", {}, ...cab.map(t => el("th", { textContent: t }))));
+  const tbody = el("tbody", {}, ...linhasTab.map(cels => el("tr", {}, ...cels.map(c => {
+    const td = el("td");
+    if (c instanceof Node) td.append(c); else td.textContent = c;
+    return td;
+  }))));
+  if (!linhasTab.length) tbody.append(el("tr", {}, el("td", { colSpan: cab.length, className: "muted", textContent: "Nenhum treino nesse filtro." })));
+  document.getElementById("tab-jogos").replaceChildren(thead, tbody);
+}
+
+function render() {
+  const jogos = jogosFiltrados();
+  const todas = linhas(jogos);
+  // Elenco do site primeiro (com foto e função); quem só aparece nos treinos entra no fim.
+  const atletas = [...elenco];
+  for (const p of linhas(treinos.jogos)) {
+    if (!atletas.some(a => chaveNome(a.nome) === chaveNome(p.nome))) atletas.push({ nome: p.nome, funcao: p.rota || "" });
+  }
+  const ordem = a => { const i = ORDEM.indexOf((a.funcao || "").split("/")[0].toLowerCase()); return i < 0 ? 9 : i; };
+  const comTreino = atletas.filter(a => linhas(treinos.jogos).some(p => chaveNome(p.nome) === chaveNome(a.nome)));
+  document.getElementById("atletas").replaceChildren(...comTreino.sort((a, b) => ordem(a) - ordem(b)).map(a => cardAtleta(a, todas)));
+  tabelaJogos(jogos);
+  const v = jogos.filter(j => j.vitoria).length;
+  const quando = new Date(treinos.gerado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  document.getElementById("sub").textContent = `${jogos.length} ${jogos.length === 1 ? "jogo" : "jogos"} de treino (${v}V ${jogos.length - v}D) · publicado em ${quando}`;
+}
+
+function preencherAdversarios() {
+  const nomes = [...new Set(treinos.jogos.map(j => j.adversario).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  document.getElementById("adversario").replaceChildren(el("option", { value: "", textContent: "Todos" }),
+    ...nomes.map(n => el("option", { value: n, textContent: n })));
+}
+
+async function decifrar(senha) {
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(senha), "PBKDF2", false, ["deriveKey"]);
+  const chave = await crypto.subtle.deriveKey(
+    { name: "PBKDF2", hash: "SHA-256", salt: bytes(pacote.sal), iterations: pacote.iteracoes },
+    base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+  const claro = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytes(pacote.iv) }, chave, bytes(pacote.dados));
+  return JSON.parse(new TextDecoder().decode(claro));
+}
+
+async function tentar(senha, lembrar) {
+  const erro = document.getElementById("erro");
+  const botao = document.getElementById("abrir");
+  erro.hidden = true;
+  botao.disabled = true;
+  botao.textContent = "Abrindo…";
+  try {
+    treinos = await decifrar(senha);
+    if (lembrar) { try { sessionStorage.setItem(CHAVE_SESSAO, senha); } catch {} }
+    preencherAdversarios();
+    document.getElementById("trava").hidden = true;
+    document.getElementById("aberto").hidden = false;
+    render();
+  } catch {
+    erro.textContent = "Senha errada.";
+    erro.hidden = false;
+    try { sessionStorage.removeItem(CHAVE_SESSAO); } catch {}
+  } finally {
+    botao.disabled = false;
+    botao.textContent = "Abrir";
+  }
+}
+
+function trancar() {
+  try { sessionStorage.removeItem(CHAVE_SESSAO); } catch {}
+  treinos = null;
+  document.getElementById("atletas").replaceChildren();
+  document.getElementById("tab-jogos").replaceChildren();
+  document.getElementById("aberto").hidden = true;
+  document.getElementById("trava").hidden = false;
+  document.getElementById("sub").textContent = "Conteúdo criptografado: só abre com a senha.";
+  document.getElementById("senha").value = "";
+  document.getElementById("senha").focus();
+}
+
+async function dataDragon() {
+  try {
+    const versoes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json").then(r => r.json());
+    const dados = await fetch(`https://ddragon.leagueoflegends.com/cdn/${versoes[0]}/data/pt_BR/champion.json`).then(r => r.json());
+    const porId = {};
+    for (const c of Object.values(dados.data)) {
+      porId[c.id.toLowerCase()] = c;
+      porId[c.name.toLowerCase().replace(/[^a-z0-9]/g, "")] = c;  // aceita "Miss Fortune" e "MissFortune"
+    }
+    dd = { versao: versoes[0], porId };
+  } catch { /* sem ícones: mostra só os nomes */ }
+}
+
+document.getElementById("form").addEventListener("submit", e => {
+  e.preventDefault();
+  tentar(document.getElementById("senha").value, document.getElementById("lembrar").checked);
+});
+document.getElementById("trancar").addEventListener("click", trancar);
+document.querySelectorAll("#periodo button").forEach(b => b.addEventListener("click", () => {
+  dias = Number(b.dataset.dias);
+  document.querySelectorAll("#periodo button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  if (treinos) render();
+}));
+document.getElementById("adversario").addEventListener("change", e => { adversario = e.target.value; if (treinos) render(); });
+document.getElementById("min-partidas").addEventListener("change", e => { minPartidas = Number(e.target.value); if (treinos) render(); });
+
+Promise.all([
+  fetch("treinos.json", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+  fetch("dados.json", { cache: "no-store" }).then(r => r.json()).catch(() => ({ jogadores: [] })),
+  dataDragon(),
+]).then(([p, d]) => {
+  pacote = p;
+  elenco = d.jogadores.map(j => ({ nome: j.nome, funcao: j.funcao, foto: j.foto }));
+  let salva = null;
+  try { salva = sessionStorage.getItem(CHAVE_SESSAO); } catch {}
+  if (salva) tentar(salva, true);
+}).catch(() => {
+  document.getElementById("form").hidden = true;
+  const erro = document.getElementById("erro");
+  erro.textContent = "A aba de treinos ainda não foi publicada.";
+  erro.hidden = false;
+});
+</script>
+</body>
+</html>
