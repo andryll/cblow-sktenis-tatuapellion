@@ -72,14 +72,15 @@
       <h2>Jogos de treino</h2>
       <div class="tabela-wrap"><table id="tab-jogos"></table></div>
     </section>
-    <p class="nota">Scout dos treinos (scrims) dos adversários, passado das prints. Quando a print não mostra um número (dano, CS, duração), ele fica de fora da conta. Foto e função vêm do elenco do CBLOW quando o time é o mesmo da aba Scout.</p>
+    <p class="nota">Scout dos treinos (scrims) dos adversários e do SKTenis, passado das prints. Quando a print não mostra um número (dano, CS, duração), ele fica de fora da conta. Foto e função vêm do nosso elenco nos treinos do SKTenis e do elenco do CBLOW quando o time é o mesmo da aba Scout.</p>
   </div>
 </main>
 
 <script>
 const ROTA = { top: "Top", jungle: "Jungle", mid: "Mid", adc: "ADC", support: "Suporte" };
 const ORDEM = ["top", "jungle", "mid", "adc", "suporte", "support"];
-let treinos = null, scout = null, time = "", dias = 0, adversario = "", minPartidas = 1;
+const NOSSO_TIME = "SKTENIS";
+let treinos = null, scout = null, nosso = [], time = "", dias = 0, adversario = "", minPartidas = 1;
 let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
 
 const el = (tag, props = {}, ...filhos) => {
@@ -125,8 +126,10 @@ function jogosFiltrados() {
 
 const doTime = () => treinos.jogos.filter(j => normal(j.time) === normal(time));
 
-// Foto e função do elenco do CBLOW, quando o time dos treinos é o adversário da aba Scout.
+// Foto e função: do nosso elenco (dados.json) nos treinos do SKTenis; do elenco do CBLOW
+// quando o time dos treinos é o adversário da aba Scout.
 function elenco() {
+  if (normal(time) === normal(NOSSO_TIME)) return nosso.map(j => ({ nome: j.nome, funcao: j.funcao, foto: j.foto }));
   const p = scout?.proximo;
   if (!p || normal(p.time.nome) !== normal(time)) return [];
   return scout.jogadores.map(j => ({ nome: j.nome, funcao: j.funcao, foto: j.foto }));
@@ -257,10 +260,12 @@ document.getElementById("time").addEventListener("change", e => { time = e.targe
 document.getElementById("adversario").addEventListener("change", e => { adversario = e.target.value; if (treinos) render(); });
 document.getElementById("min-partidas").addEventListener("change", e => { minPartidas = Number(e.target.value); if (treinos) render(); });
 
-Promise.all([Trava.abrir(["treinos.json", "scout.json"]), dataDragon()])
-  .then(([[t, sc]]) => {
+const dadosPublicos = fetch("dados.json", { cache: "no-store" }).then(r => r.json()).catch(() => ({ jogadores: [] }));
+Promise.all([Trava.abrir(["treinos.json", "scout.json"]), dataDragon(), dadosPublicos])
+  .then(([[t, sc], , d]) => {
     treinos = t;
     scout = sc;
+    nosso = d.jogadores || [];
     preencherTimes();
     render();
   })
