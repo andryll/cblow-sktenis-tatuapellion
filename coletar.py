@@ -37,6 +37,7 @@ PAUSA_SCOUT = 1.2  # a primeira coleta de um adversário baixa tudo desde 02/10;
 # e o que vai para o site.
 ARQ_RODIZIO = RAIZ / "rodizio.json"
 ARQ_SITE_RODIZIO = RAIZ / "site" / "rodizio.json"
+ARQ_CACHE_SERIES = RAIZ / "dados" / "cblow_series.json"  # detalhe das séries finalizadas no CBLOW
 PASTA_FOTOS = RAIZ / "site" / "fotos"
 URL_FOTOS = "https://cdn.cblow.xyz/jogadores"  # fotos oficiais do CBLOW
 
@@ -370,48 +371,85 @@ def atualizar_scout(chave, agora):
     }, ensure_ascii=False), encoding="utf-8")
 
 
-def gerar_rodizio(agora):
-    """Gera site/rodizio.json: elenco do time no CBLOW, escalação de cada jogo oficial e o próximo jogo.
+def series_finalizadas(ids):
+    """Detalhe das séries finalizadas, com cache em dados/cblow_series.json (uma série finalizada não muda)."""
+    cache = json.loads(ARQ_CACHE_SERIES.read_text(encoding="utf-8")) if ARQ_CACHE_SERIES.exists() else {}
+    novas = [i for i in ids if str(i) not in cache]
+    for i in novas:
+        cache[str(i)] = baixar_json(f"{API_CBLOW}/matches/{i}")
+    if novas:
+        ARQ_CACHE_SERIES.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    return cache
 
-    A regra do rodízio (quem é obrigado a jogar) é calculada na página, a partir desses dados.
+
+def gerar_rodizio(agora):
+    """Gera site/rodizio.json com o elenco, a escalação de cada jogo oficial e o próximo jogo de cada time.
+
+    A regra do rodízio (quem é obrigado a jogar e quem errou) é calculada na página, a partir desses dados.
     """
     config = json.loads(ARQ_RODIZIO.read_text(encoding="utf-8")) if ARQ_RODIZIO.exists() else {}
     entradas = config.get("entradas", {})
     def foto(p):  # a foto já baixada para o site, ou a do CBLOW
         local = arquivo_foto({"nome": p["nick"]})
         return f"fotos/{local.name}" if local.exists() else p.get("avatarUrl") or ""
-    elenco = [{"nick": p["nick"], "slug": p["slug"], "funcao": p["role"], "foto": foto(p),
-               "pe_de_chumbo": bool(p.get("peDeChumbo")), "entrada": entradas.get(p["slug"])}
-              for p in baixar_json(f"{API_CBLOW}/players")
-              if (p.get("team") or {}).get("slug") == TIME_CBLOW and not p.get("quit")]
 
-    series = sorted((m for m in baixar_json(f"{API_CBLOW}/matches")
-                     if TIME_CBLOW in (m["team1"]["slug"], m["team2"]["slug"])), key=lambda m: m["scheduledAt"])
+    jogadores = baixar_json(f"{API_CBLOW}/players")
+    todas = sorted(baixar_json(f"{API_CBLOW}/matches"), key=lambda m: m["scheduledAt"])
+    detalhes = series_finalizadas([m["id"] for m in todas if m["status"] == "finalizada"])
     campeoes = ids_campeoes()
-    jogos, proximo = [], None
-    for m in series:
-        nosso, outro = (m["team1"], m["team2"]) if m["team1"]["slug"] == TIME_CBLOW else (m["team2"], m["team1"])
-        if m["status"] != "finalizada":
-            if proximo is None:
-                proximo = {"quando": m["scheduledAt"], "fase": m["stage"], "melhor_de": m["bestOf"],
-                           "adversario": {"nome": outro["name"], "tag": outro["tag"]}}
-            continue
-        detalhe = baixar_json(f"{API_CBLOW}/matches/{m['id']}")
-        for jogo in sorted(detalhe["games"], key=lambda g: g["number"]):
-            carta = jogo.get("card1") if jogo.get("blueId") == nosso["id"] else jogo.get("card2")
-            jogos.append({
-                "id": f"{m['id']}_{jogo['number']}", "quando": m["scheduledAt"], "fase": m["stage"],
-                "adversario": {"nome": outro["name"], "tag": outro["tag"]},
-                "vitoria": jogo["winnerId"] == nosso["id"], "carta": (carta or {}).get("name", ""),
-                "escalacao": [{"slug": l["player"]["slug"], "nick": l["player"]["nick"],
-                               "campeao": campeoes.get(normalizar(l["champion"]), l["champion"])}
-                              for l in jogo["lines"] if l["teamId"] == nosso["id"]],
-            })
+
+    times = {}
+    for m in todas:
+        for t in (m["team1"], m["team2"]):
+            times.setdefault(t["slug"], {"slug": t["slug"], "nome": t["name"], "tag": t["tag"], "id": t["id"],
+                                         "elenco": [], "jogos": [], "proximo": None})
+    for p in jogadores:
+        t = times.get((p.get("team") or {}).get("slug"))
+        if t:
+            # Quem saiu continua na lista: conta para o rodízio até o último jogo que fez.
+            t["elenco"].append({"nick": p["nick"], "slug": p["slug"], "funcao": p["role"], "foto": foto(p),
+                                "pe_de_chumbo": bool(p.get("peDeChumbo")), "entrada": entradas.get(p["slug"]),
+                                "saiu": bool(p.get("quit")), "cadastro": p["id"]})
+
+    for m in todas:
+        for nosso, outro in ((m["team1"], m["team2"]), (m["team2"], m["team1"])):
+            t = times[nosso["slug"]]
+            if m["status"] != "finalizada":
+                if t["proximo"] is None:
+                    t["proximo"] = {"quando": m["scheduledAt"], "fase": m["stage"], "melhor_de": m["bestOf"],
+                                    "adversario": {"nome": outro["name"], "tag": outro["tag"]}}
+                continue
+            for jogo in sorted(detalhes[str(m["id"])]["games"], key=lambda g: g["number"]):
+                carta = jogo.get("card1") if jogo.get("blueId") == nosso["id"] else jogo.get("card2")
+                t["jogos"].append({
+                    "id": f"{m['id']}_{jogo['number']}", "quando": m["scheduledAt"], "fase": m["stage"],
+                    "adversario": {"nome": outro["name"], "tag": outro["tag"]},
+                    "vitoria": jogo["winnerId"] == nosso["id"], "carta": (carta or {}).get("name", ""),
+                    "escalacao": [{"slug": l["player"]["slug"], "nick": l["player"]["nick"],
+                                   "campeao": campeoes.get(normalizar(l["champion"]), l["champion"])}
+                                  for l in jogo["lines"] if l["teamId"] == nosso["id"]],
+                })
+    # O CBLOW não informa quando cada um entrou. Quem foi cadastrado depois de todos os que jogaram a
+    # Rodada 1 entrou no meio do campeonato: sem data em rodizio.json, conta a partir do primeiro jogo que fez.
+    cadastro = {p["slug"]: p["id"] for p in jogadores}
+    rodada1 = {e["slug"] for t in times.values() for j in t["jogos"] if j["fase"] == "Rodada 1" for e in j["escalacao"]}
+    limite = max((cadastro[s] for s in rodada1 if s in cadastro), default=None)
+    for t in times.values():
+        for p in t["elenco"]:
+            if p["entrada"] or limite is None or p["cadastro"] <= limite:
+                continue
+            primeiro = next((j["quando"] for j in t["jogos"] if any(e["slug"] == p["slug"] for e in j["escalacao"])), None)
+            p["entrada"] = (datetime.fromisoformat(primeiro.replace("Z", "+00:00")).astimezone(BRASILIA).date().isoformat()
+                            if primeiro else agora.date().isoformat())
+            p["entrada_estimada"] = True
+
+    lista = sorted(times.values(), key=lambda t: (t["slug"] != TIME_CBLOW, t["nome"]))
+    for t in lista:
+        del t["id"]
     ARQ_SITE_RODIZIO.write_text(json.dumps({
-        "atualizado_em": agora.isoformat(timespec="minutes"),
-        "elenco": elenco, "jogos": jogos, "proximo": proximo,
+        "atualizado_em": agora.isoformat(timespec="minutes"), "padrao": TIME_CBLOW, "times": lista,
     }, ensure_ascii=False), encoding="utf-8")
-    print(f"[rodízio] {len(elenco)} no elenco, {len(jogos)} jogos oficiais")
+    print(f"[rodízio] {len(lista)} times, {sum(len(t['jogos']) for t in lista)} escalações em jogos oficiais")
 
 
 def ler_historico():

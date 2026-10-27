@@ -32,6 +32,23 @@
   td.quem img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; vertical-align: middle; margin-right: 6px; }
   .tag-obrig { color: var(--down); font-size: 12px; font-weight: 600; margin-left: 6px; }
   .tag-fixo { color: var(--muted); font-size: 12px; margin-left: 6px; }
+  .tag-saiu { color: var(--muted); font-size: 12px; margin-left: 6px; font-style: italic; }
+  .seletor { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; color: var(--ink-2); font-size: 14px; }
+  .seletor select {
+    font: inherit; font-size: 15px; font-weight: 600; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; max-width: 100%;
+  }
+  .infracoes { margin-bottom: 16px; border-color: color-mix(in srgb, var(--down) 55%, transparent); }
+  .infracoes.ok { border-color: var(--border); }
+  .infracoes h2 { color: var(--down); }
+  .infracoes.ok h2 { color: var(--up); }
+  .infracoes ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .infracoes li strong { color: var(--ink); }
+  .infracoes .regra { color: var(--ink-2); }
+  th.jogo.erro { background: color-mix(in srgb, var(--down) 22%, transparent); }
+  td.cel.erro { background: color-mix(in srgb, var(--down) 10%, transparent); }
+  th.jogo .alerta { display: block; color: var(--down); font-size: 12px; }
+  th.jogo .incompleta { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
 </style>
 </head>
 <body>
@@ -39,7 +56,7 @@
   <header>
     <img src="fotos/time.webp" alt="">
     <div>
-      <h1>SKTenis Tatuapellion · Rodízio</h1>
+      <h1 id="titulo">Rodízio</h1>
       <p class="sub" id="sub">Carregando…</p>
     </div>
   </header>
@@ -53,6 +70,10 @@
     <a href="treinos.html">🔒 Treinos</a>
   </nav>
 
+  <label class="seletor">Time <select id="time" aria-label="Time"></select></label>
+
+  <section class="card infracoes" id="infracoes"></section>
+
   <section class="card">
     <h2 id="titulo-proximo">Próximo jogo</h2>
     <div class="grupos" id="grupos"></div>
@@ -63,18 +84,21 @@
   <section class="card">
     <h2>Quem jogou cada partida</h2>
     <div class="tabela-wrap"><table id="historico"></table></div>
-    <p class="nota">Ícone = jogou, com o campeão. Colunas da mesma cor são do mesmo ciclo; depois do jogo que completa um ciclo, o seguinte começa do zero.</p>
+    <p class="nota">Ícone = jogou, com o campeão. Colunas da mesma cor são do mesmo ciclo; depois do jogo que completa um ciclo, o seguinte começa do zero. Coluna vermelha = jogo com infração.</p>
   </section>
 
   <p class="nota">Regras do CBLOW, art. 2 (<a href="https://cblow.xyz/regras">cblow.xyz/regras</a>): rodízio obrigatório a cada partida (§2.1);
     a escalação só pode se repetir depois que todos os inscritos jogarem ao menos uma partida (§2.3); o Pé de Chumbo nunca sai (§2.4);
-    a fila zera no início dos playoffs (§2.5); quem entra e é tirado por uma carta não perde a vez (§3.2) — como não aparece na partida, continua pendente.</p>
+    a fila zera no início dos playoffs (§2.5); quem entra e é tirado por uma carta não perde a vez (§3.2) — como não aparece na partida, continua pendente.
+    O CBLOW não informa quando cada um entrou ou saiu do elenco: quem saiu conta até o último jogo que fez, e quem foi cadastrado depois da Rodada 1 conta a partir do primeiro jogo que fez (ou da data em <code>rodizio.json</code>).</p>
 </main>
 
 <script>
 const ROTA = { top: "Top", jungle: "Jungle", mid: "Mid", adc: "ADC", support: "Suporte" };
 const ORDEM_ROTA = ["top", "jungle", "mid", "adc", "support"];
+const CHAVE_TIME = "rodizio-time";
 let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
+let dados = null;
 
 const el = (tag, props = {}, ...filhos) => {
   const e = Object.assign(document.createElement(tag), props);
@@ -83,6 +107,7 @@ const el = (tag, props = {}, ...filhos) => {
 };
 const dataCurta = iso => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit" });
 const diaBrasilia = iso => new Date(new Date(iso).getTime() - 3 * 3600e3).toISOString().slice(0, 10);
+const lista = nomes => (nomes.length > 1 ? `${nomes.slice(0, -1).join(", ")} e ${nomes.at(-1)}` : nomes[0] || "");
 
 function icone(nome) {
   const c = dd.porId[nome.toLowerCase()];
@@ -90,39 +115,72 @@ function icone(nome) {
   return el("img", { src: `https://ddragon.leagueoflegends.com/cdn/${dd.versao}/img/champion/${c.id}.png`, alt: c.name, title: c.name, loading: "lazy" });
 }
 
-// Percorre os jogos em ordem e acompanha quem ainda falta jogar no ciclo (§2.3).
+// Percorre os jogos em ordem, acompanha quem ainda falta jogar no ciclo (§2.3) e marca as infrações.
 // - O Pé de Chumbo (§2.4) não entra na conta: joga sempre.
 // - Quem entra no elenco depois (rodizio.json) passa a faltar a partir da data de entrada.
+// - Quem saiu do time conta até o último jogo que fez (o CBLOW não informa a data de saída).
 // - Quando o último que faltava joga, o ciclo fecha; o próximo ciclo começa do zero no jogo seguinte.
 // - No primeiro jogo dos playoffs a fila zera (§2.5).
-function calcular(dados) {
-  const rodam = dados.elenco.filter(p => !p.pe_de_chumbo);
+function calcular(t) {
+  const nick = Object.fromEntries([...t.elenco.map(p => [p.slug, p.nick]),
+    ...t.jogos.flatMap(j => j.escalacao.map(e => [e.slug, e.nick]))]);
+  const rodam = t.elenco.filter(p => !p.pe_de_chumbo);
+  const fixos = t.elenco.filter(p => p.pe_de_chumbo && !p.saiu).map(p => p.slug);
+  const ultimoJogo = {};
+  t.jogos.forEach((j, i) => j.escalacao.forEach(e => { ultimoJogo[e.slug] = i; }));
+  const ativo = (p, i) => !p.saiu || (ultimoJogo[p.slug] != null && i <= ultimoJogo[p.slug]);
+
   const conhecidos = new Set(), pendentes = new Set();
-  let ciclo = 1, inicio = null, playoffs = false;
-  const entra = dia => rodam.forEach(p => {
-    if (!conhecidos.has(p.slug) && (!p.entrada || p.entrada <= dia)) { conhecidos.add(p.slug); pendentes.add(p.slug); }
+  let ciclo = 1, inicio = null, playoffs = false, vistas = [], anterior = null;
+  const atualizar = (dia, i) => rodam.forEach(p => {
+    const vale = (!p.entrada || p.entrada <= dia) && ativo(p, i);
+    if (vale && !conhecidos.has(p.slug)) { conhecidos.add(p.slug); pendentes.add(p.slug); }
+    if (!vale && conhecidos.has(p.slug)) { conhecidos.delete(p.slug); pendentes.delete(p.slug); }
   });
 
-  for (const j of dados.jogos) {
-    entra(diaBrasilia(j.quando));
+  t.jogos.forEach((j, i) => {
+    atualizar(diaBrasilia(j.quando), i);
     if (/playoff/i.test(j.fase) && !playoffs) {
       playoffs = true;
       if (inicio) ciclo++;
       conhecidos.forEach(s => pendentes.add(s));
       inicio = null;
+      vistas = [];
     }
     inicio ||= j;
     j.ciclo = ciclo;
-    const escalados = new Set(j.escalacao.map(e => e.slug));
-    escalados.forEach(s => pendentes.delete(s));
+    const esc = new Set(j.escalacao.map(e => e.slug));
+    const chave = [...esc].sort().join(",");
+    const faltavam = [...pendentes].filter(s => !esc.has(s)).map(s => nick[s]);
+
+    j.erros = [];
+    // Com jogador faltando no registro do CBLOW, não dá para saber se a escalação se repetiu.
+    j.incompleta = esc.size < 5;
+    fixos.filter(f => !esc.has(f)).forEach(f => j.erros.push({ regra: "§2.4", texto: `o Pé de Chumbo ${nick[f]} ficou de fora.` }));
+    if (j.incompleta || anterior?.j.incompleta) {
+      // sem comparação
+    } else if (anterior && chave === anterior.chave) {
+      j.erros.push({ regra: "§2.1", texto: `mesma escalação do jogo anterior (${dataCurta(anterior.j.quando)} contra ${anterior.j.adversario.tag}), sem nenhuma troca.` });
+    } else {
+      const igual = vistas.find(v => v.chave === chave);
+      if (igual && faltavam.length) {
+        j.erros.push({ regra: "§2.3", texto: `repetiu a escalação do jogo de ${dataCurta(igual.j.quando)} contra ${igual.j.adversario.tag}, `
+          + `mas ${lista(faltavam)} ainda não ${faltavam.length > 1 ? "tinham" : "tinha"} jogado no ciclo ${ciclo}.` });
+      }
+    }
+
+    esc.forEach(s => pendentes.delete(s));
+    vistas.push({ chave, j });
+    anterior = { chave, j };
     if (!pendentes.size) {
       ciclo++;
       j.fechou = true;
       conhecidos.forEach(s => pendentes.add(s));
       inicio = null;
+      vistas = [];
     }
-  }
-  entra(diaBrasilia(new Date().toISOString()));
+  });
+  atualizar(diaBrasilia(new Date().toISOString()), t.jogos.length);
   return { pendentes, ciclo, inicio };
 }
 
@@ -133,11 +191,41 @@ function chip(p, det) {
     el("div", { className: "det", textContent: det })));
 }
 
-function render(dados) {
-  const { pendentes, ciclo, inicio } = calcular(dados);
-  const ultimo = dados.jogos[dados.jogos.length - 1];
+function desenharInfracoes(t) {
+  const box = document.getElementById("infracoes");
+  const comErro = t.jogos.filter(j => j.erros.length);
+  box.classList.toggle("ok", !comErro.length);
+  if (!t.jogos.length) {
+    box.replaceChildren(el("h2", { textContent: "Nenhum jogo oficial ainda" }));
+    return;
+  }
+  const incompletos = t.jogos.filter(j => j.incompleta).length;
+  const obsIncompletos = incompletos
+    ? [el("p", { className: "explica", textContent: `${incompletos} ${incompletos > 1 ? "jogos estão" : "jogo está"} com a escalação incompleta no CBLOW (marcados com x/5): nesses não dá para conferir repetição de escalação.` })]
+    : [];
+  if (!comErro.length) {
+    box.replaceChildren(el("h2", { textContent: "✓ Nenhuma infração no rodízio" }),
+      el("p", { className: "explica", textContent: `Conferidos os ${t.jogos.length} jogos oficiais do ${t.nome} com as regras §2.1, §2.3 e §2.4.` }),
+      ...obsIncompletos);
+    return;
+  }
+  const n = comErro.reduce((s, j) => s + j.erros.length, 0);
+  box.replaceChildren(el("h2", { textContent: `⚠ ${n} ${n > 1 ? "infrações" : "infração"} no rodízio` }),
+    el("ul", {}, ...comErro.flatMap(j => j.erros.map(e => el("li", {},
+      el("strong", { textContent: `Jogo de ${dataCurta(j.quando)} contra ${j.adversario.nome}` }),
+      el("span", { className: "regra", textContent: ` · ${e.regra}: ` }), e.texto,
+      ...(j.carta ? [el("span", { className: "regra", textContent: ` (carta do jogo: ${j.carta})` })] : []))))),
+    el("p", { className: "explica", textContent: "Cartas que tiram jogador (§3.2) podem explicar uma ausência; pelo §3.1 a escalação é definida antes do sorteio da carta." }),
+    ...obsIncompletos);
+}
+
+function render() {
+  const t = dados.times.find(x => x.slug === document.getElementById("time").value);
+  const { pendentes, ciclo, inicio } = calcular(t);
+  const elenco = t.elenco.filter(p => !p.saiu);
+  const ultimo = t.jogos[t.jogos.length - 1];
   const ultimaEsc = new Set(ultimo ? ultimo.escalacao.map(e => e.slug) : []);
-  const jogou = slug => dados.jogos.filter(j => j.escalacao.some(e => e.slug === slug));
+  const jogou = slug => t.jogos.filter(j => j.escalacao.some(e => e.slug === slug));
   const det = p => {
     const js = jogou(p.slug);
     const funcao = ROTA[p.funcao] || p.funcao;
@@ -146,12 +234,25 @@ function render(dados) {
   };
   const porRota = (a, b) => ORDEM_ROTA.indexOf(a.funcao) - ORDEM_ROTA.indexOf(b.funcao);
 
-  const obrig = dados.elenco.filter(p => pendentes.has(p.slug)).sort(porRota);
-  const fixos = dados.elenco.filter(p => p.pe_de_chumbo);
-  const livres = dados.elenco.filter(p => !p.pe_de_chumbo && !pendentes.has(p.slug)).sort(porRota);
-  const grupo = (classe, titulo, lista, vazio, detalhe = det) => el("div", { className: `grupo ${classe}` },
-    el("h3", { textContent: `${titulo} (${lista.length})` }),
-    lista.length ? el("div", { className: "chips" }, ...lista.map(p => chip(p, detalhe(p))))
+  document.getElementById("titulo").textContent = `Rodízio · ${t.nome}`;
+  const atualizado = new Date(dados.atualizado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  const sub = document.getElementById("sub");
+  if (t.proximo) {
+    const quando = new Date(t.proximo.quando).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    document.getElementById("titulo-proximo").textContent = `Próximo jogo: ${t.proximo.adversario.nome}`;
+    sub.textContent = `${quando} · ${t.proximo.fase} · melhor de ${t.proximo.melhor_de} · atualizado em ${atualizado}`;
+  } else {
+    document.getElementById("titulo-proximo").textContent = "Próximo jogo";
+    sub.textContent = `Nenhum próximo jogo marcado no CBLOW · atualizado em ${atualizado}`;
+  }
+  desenharInfracoes(t);
+
+  const obrig = elenco.filter(p => pendentes.has(p.slug)).sort(porRota);
+  const fixos = elenco.filter(p => p.pe_de_chumbo);
+  const livres = elenco.filter(p => !p.pe_de_chumbo && !pendentes.has(p.slug)).sort(porRota);
+  const grupo = (classe, titulo, membros, vazio, detalhe = det) => el("div", { className: `grupo ${classe}` },
+    el("h3", { textContent: `${titulo} (${membros.length})` }),
+    membros.length ? el("div", { className: "chips" }, ...membros.map(p => chip(p, detalhe(p))))
       : el("div", { className: "vazio-grupo", textContent: vazio }));
   document.getElementById("grupos").replaceChildren(
     grupo("obrig", "Obrigados a jogar", obrig, "Ninguém pendente: escalação livre (só não pode repetir a última)."),
@@ -167,29 +268,38 @@ function render(dados) {
 
   const partes = [];
   if (inicio) {
-    const ja = [...new Set(dados.jogos.filter(j => j.ciclo === ciclo).flatMap(j => j.escalacao.map(e => e.nick)))];
+    const ja = [...new Set(t.jogos.filter(j => j.ciclo === ciclo).flatMap(j => j.escalacao.map(e => e.nick)))];
     partes.push(`Ciclo ${ciclo}, aberto no jogo de ${dataCurta(inicio.quando)} contra ${inicio.adversario.nome}.`);
     if (ja.length) partes.push(`Já jogaram neste ciclo: ${ja.join(", ")}.`);
-  } else if (dados.jogos.length) {
+  } else if (t.jogos.length) {
     partes.push(`O ciclo ${ciclo - 1} fechou no último jogo; o ciclo ${ciclo} começa no próximo, com todos pendentes.`);
   }
   if (ultimo) partes.push(`A escalação não pode ser igual à do último jogo (${ultimo.escalacao.map(e => e.nick).join(", ")}): pelo menos uma troca (§2.1).`);
   document.getElementById("explica").textContent = partes.join(" ");
 
-  // Histórico: jogadores nas linhas, jogos nas colunas, cor alternada por ciclo.
-  const cor = j => (j.ciclo % 2 ? "" : "par");
+  // Histórico: jogadores nas linhas, jogos nas colunas, cor alternada por ciclo, vermelho onde houve infração.
+  const cor = j => (j.ciclo % 2 ? "" : "par") + (j.erros.length ? " erro" : "");
   const linhaCiclos = el("tr", { className: "ciclos" }, el("th"),
-    ...dados.jogos.map(j => el("th", { className: cor(j), textContent: j.fechou ? `ciclo ${j.ciclo} (fecha)` : `ciclo ${j.ciclo}` })),
+    ...t.jogos.map(j => el("th", { className: cor(j), textContent: j.fechou ? `ciclo ${j.ciclo} (fecha)` : `ciclo ${j.ciclo}` })),
     el("th"));
-  const linhaJogos = el("tr", {}, el("th", { textContent: "Atleta" }), ...dados.jogos.map(j => el("th", { className: `jogo ${cor(j)}` },
+  const linhaJogos = el("tr", {}, el("th", { textContent: "Atleta" }), ...t.jogos.map(j => el("th", {
+      className: `jogo ${cor(j)}`, title: j.erros.map(e => `${e.regra}: ${e.texto}`).join("\n") },
     el("span", { textContent: dataCurta(j.quando) }), el("span", { className: "adv", textContent: j.adversario.tag }),
-    el("span", { className: `res ${j.vitoria ? "v" : "d"}`, textContent: j.vitoria ? "V" : "D", title: j.carta ? `Carta: ${j.carta}` : "" }))),
+    el("span", { className: `res ${j.vitoria ? "v" : "d"}`, textContent: j.vitoria ? "V" : "D", title: j.carta ? `Carta: ${j.carta}` : "" }),
+    ...(j.erros.length ? [el("span", { className: "alerta", textContent: `⚠ ${j.erros.map(e => e.regra).join(" ")}` })] : []),
+    ...(j.incompleta ? [el("span", { className: "incompleta", textContent: `${j.escalacao.length}/5`, title: "O CBLOW registrou só parte da escalação deste jogo" })] : []))),
     el("th", { className: "num", textContent: "Jogos" }));
-  const corpo = el("tbody", {}, ...[...dados.elenco].sort(porRota).map(p => el("tr", {},
+  // Quem jogou mas não está mais no elenco do time (trocou de time) também aparece, como "saiu".
+  const noElenco = new Set(t.elenco.map(p => p.slug));
+  const extras = [...new Map(t.jogos.flatMap(j => j.escalacao).filter(e => !noElenco.has(e.slug))
+    .map(e => [e.slug, { nick: e.nick, slug: e.slug, funcao: "", saiu: true }])).values()];
+  const linhas = [...elenco.sort(porRota), ...t.elenco.filter(p => p.saiu), ...extras];
+  const corpo = el("tbody", {}, ...linhas.map(p => el("tr", {},
     el("td", { className: "quem" }, ...(p.foto ? [el("img", { src: p.foto, alt: "" })] : []), p.nick,
       ...(p.pe_de_chumbo ? [el("span", { className: "tag-fixo", textContent: "Pé de Chumbo" })] : []),
+      ...(p.saiu ? [el("span", { className: "tag-saiu", textContent: "saiu" })] : []),
       ...(pendentes.has(p.slug) ? [el("span", { className: "tag-obrig", textContent: "obrigado" })] : [])),
-    ...dados.jogos.map(j => {
+    ...t.jogos.map(j => {
       const e = j.escalacao.find(x => x.slug === p.slug);
       const fora = p.entrada && diaBrasilia(j.quando) < p.entrada;
       return el("td", { className: `cel ${cor(j)}` }, e ? icone(e.campeao)
@@ -197,6 +307,18 @@ function render(dados) {
     }),
     el("td", { className: "num", textContent: String(jogou(p.slug).length) }))));
   document.getElementById("historico").replaceChildren(el("thead", {}, linhaCiclos, linhaJogos), corpo);
+}
+
+// Abre no time do link (?time=slug), no último escolhido neste aparelho ou no SKTenis.
+function preencherTimes() {
+  let salvo = new URLSearchParams(location.search).get("time");
+  if (!salvo) { try { salvo = localStorage.getItem(CHAVE_TIME); } catch {} }
+  const inicial = dados.times.some(t => t.slug === salvo) ? salvo : dados.padrao;
+  document.getElementById("time").replaceChildren(...dados.times.map(t => {
+    calcular(t);
+    const erros = t.jogos.reduce((s, j) => s + j.erros.length, 0);
+    return el("option", { value: t.slug, selected: t.slug === inicial, textContent: `${t.nome}${erros ? ` · ⚠ ${erros}` : ""}` });
+  }));
 }
 
 async function dataDragon() {
@@ -207,18 +329,16 @@ async function dataDragon() {
   } catch { /* sem ícones: mostra as iniciais */ }
 }
 
+document.getElementById("time").addEventListener("change", e => {
+  try { localStorage.setItem(CHAVE_TIME, e.target.value); } catch {}
+  render();
+});
+
 Promise.all([fetch("rodizio.json", { cache: "no-store" }).then(r => r.json()), dataDragon()])
-  .then(([dados]) => {
-    const sub = document.getElementById("sub");
-    const atualizado = new Date(dados.atualizado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
-    if (dados.proximo) {
-      const quando = new Date(dados.proximo.quando).toLocaleString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-      document.getElementById("titulo-proximo").textContent = `Próximo jogo: ${dados.proximo.adversario.nome}`;
-      sub.textContent = `${quando} · ${dados.proximo.fase} · melhor de ${dados.proximo.melhor_de} · atualizado em ${atualizado}`;
-    } else {
-      sub.textContent = `Nenhum próximo jogo marcado no CBLOW · atualizado em ${atualizado}`;
-    }
-    render(dados);
+  .then(([d]) => {
+    dados = d;
+    preencherTimes();
+    render();
   })
   .catch(() => { document.getElementById("sub").textContent = "Ainda não há dados do rodízio."; });
 </script>
