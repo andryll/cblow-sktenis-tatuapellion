@@ -1,4 +1,8 @@
 __pycache__/
 .env
-site/treinos.json
+# Dados das abas privadas: o texto aberto fica no repositório privado; site/ só recebe a versão criptografada na publicação.
 privado-fonte/
+privado-saida/
+site/treinos.json
+site/partidas.json
+site/scout.json

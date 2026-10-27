@@ -21,17 +21,22 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 RAIZ = Path(__file__).parent
+# As partidas (do time e dos adversários) ficam no repositório privado andryll/cblow-privado, que o
+# workflow baixa em privado-fonte/. O que as abas privadas leem vai em texto aberto só para
+# privado-saida/ (fora do git); o privado.py criptografa de lá para site/.
+PASTA_PRIVADA = Path(os.environ.get("PASTA_PRIVADA") or RAIZ / "privado-fonte")
+PASTA_SAIDA_PRIVADA = RAIZ / "privado-saida"
 ARQ_JOGADORES = RAIZ / "jogadores.json"
 ARQ_HISTORICO = RAIZ / "dados" / "historico.csv"
-ARQ_PARTIDAS = RAIZ / "dados" / "partidas.json"
+ARQ_PARTIDAS = PASTA_PRIVADA / "partidas.json"
 ARQ_SITE = RAIZ / "site" / "dados.json"
-ARQ_SITE_PARTIDAS = RAIZ / "site" / "partidas.json"
+ARQ_SITE_PARTIDAS = PASTA_SAIDA_PRIVADA / "partidas.json"
 # Scout do próximo adversário: Riot ID corrigido à mão (slug do jogador no CBLOW -> "Nick#TAG"),
 # partidas baixadas e o que vai para o site.
 ARQ_ADVERSARIOS = RAIZ / "adversarios.json"
 ARQ_PROXIMO_ADVERSARIO = RAIZ / "proximo_adversario.json"  # força o adversário do scout
-ARQ_PARTIDAS_ADV = RAIZ / "dados" / "partidas_adversarios.json"
-ARQ_SITE_SCOUT = RAIZ / "site" / "scout.json"
+ARQ_PARTIDAS_ADV = PASTA_PRIVADA / "partidas_adversarios.json"
+ARQ_SITE_SCOUT = PASTA_SAIDA_PRIVADA / "scout.json"
 PAUSA_SCOUT = 1.2  # a primeira coleta de um adversário baixa tudo desde 02/10; 100 chamadas a cada 2 minutos
 # Rodízio do time (regras do CBLOW, art. 2): quem entrou no elenco depois do início (slug -> data)
 # e o que vai para o site.
@@ -315,6 +320,7 @@ def atualizar_scout(chave, agora):
     """Baixa as partidas do elenco do próximo adversário e gera site/scout.json."""
     prox = proximo_adversario()
     if prox is None:
+        PASTA_SAIDA_PRIVADA.mkdir(exist_ok=True)
         ARQ_SITE_SCOUT.write_text(json.dumps({"atualizado_em": agora.isoformat(timespec="minutes"), "proximo": None}),
                                   encoding="utf-8")
         print("[scout] sem próximo jogo marcado no CBLOW")
@@ -360,6 +366,7 @@ def atualizar_scout(chave, agora):
 
     partidas.sort(key=lambda p: (p["fim"], p["riot_id"].lower()))
     ARQ_PARTIDAS_ADV.write_text(json.dumps(partidas, ensure_ascii=False, indent=0), encoding="utf-8")
+    PASTA_SAIDA_PRIVADA.mkdir(exist_ok=True)
     ARQ_SITE_SCOUT.write_text(json.dumps({
         "atualizado_em": agora.isoformat(timespec="minutes"),
         "desde": desde.isoformat(),
@@ -534,7 +541,9 @@ def gerar_site(linhas, jogadores, agora):
         })
     ARQ_SITE.parent.mkdir(exist_ok=True)
     ARQ_SITE.write_text(json.dumps(saida, ensure_ascii=False, indent=1), encoding="utf-8")
-    ARQ_SITE_PARTIDAS.write_text(json.dumps(ler_partidas(), ensure_ascii=False), encoding="utf-8")
+    if PASTA_PRIVADA.is_dir():
+        PASTA_SAIDA_PRIVADA.mkdir(exist_ok=True)
+        ARQ_SITE_PARTIDAS.write_text(json.dumps(ler_partidas(), ensure_ascii=False), encoding="utf-8")
 
 
 def main():
@@ -547,7 +556,12 @@ def main():
     hoje = agora.date().isoformat()
 
     linhas = ler_historico()
-    partidas = ler_partidas()
+    # Sem o repositório privado (falta o secret TOKEN_PRIVADO), só o elo é coletado: baixar as
+    # partidas de novo desde 02/10 a cada hora seria pesado e elas não teriam onde ficar.
+    privado = PASTA_PRIVADA.is_dir()
+    if not privado:
+        print(f"[privado] sem {PASTA_PRIVADA.name}/: partidas, desempenho e scout ficam de fora desta coleta")
+    partidas = ler_partidas() if privado else []
     falhas = 0
     for j in jogadores:
         try:
@@ -564,7 +578,7 @@ def main():
             print(f"[foto] {j['nome']}: baixada do site do CBLOW")
 
         try:
-            novas = atualizar_partidas(j, puuid, chave, partidas)
+            novas = atualizar_partidas(j, puuid, chave, partidas) if privado else 0
         except ChaveInvalida as e:
             sys.exit(str(e))
         except Exception as e:
@@ -577,13 +591,14 @@ def main():
         desc = "sem rank" if elo["pontos"] is None else f"{elo['tier']} {elo['rank']} {elo['lp']} PDL"
         print(f"[ok] {j['nome']}: {desc} ({elo['vitorias']}V {elo['derrotas']}D), {novas} partidas novas")
 
-    try:
-        print(f"[ok] campeonato: {atualizar_campeonato(jogadores, partidas)} jogos novos de atletas no CBLOW")
-    except Exception as e:
-        print(f"[erro] jogos do campeonato (api.cblow.xyz): {e}")
+    if privado:
+        try:
+            print(f"[ok] campeonato: {atualizar_campeonato(jogadores, partidas)} jogos novos de atletas no CBLOW")
+        except Exception as e:
+            print(f"[erro] jogos do campeonato (api.cblow.xyz): {e}")
+        salvar_partidas(partidas)
 
     salvar_historico(linhas)
-    salvar_partidas(partidas)
     gerar_site(linhas, jogadores, agora)
     print(f"{len(jogadores) - falhas}/{len(jogadores)} jogadores atualizados em {hoje}.")
 
@@ -592,10 +607,11 @@ def main():
         gerar_rodizio(agora)
     except Exception as e:
         print(f"[rodízio] erro: {e}")
-    try:
-        atualizar_scout(chave, agora)
-    except Exception as e:
-        print(f"[scout] erro: {e}")
+    if privado:
+        try:
+            atualizar_scout(chave, agora)
+        except Exception as e:
+            print(f"[scout] erro: {e}")
     if falhas == len(jogadores):
         sys.exit(1)
 

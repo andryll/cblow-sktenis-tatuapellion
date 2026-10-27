@@ -7,31 +7,14 @@
 <title>SKTenis Treinos</title>
 <link rel="icon" type="image/webp" href="fotos/time.webp">
 <link rel="stylesheet" href="estilo.css">
+<script src="trava.js"></script>
 <style>
-  .trava { max-width: 420px; }
-  .trava form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .trava input[type="password"] {
-    flex: 1 1 200px; font: inherit; color: var(--ink); background: var(--page);
-    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
-  }
-  .trava button {
-    font: inherit; font-weight: 600; color: var(--page); background: var(--ink);
-    border: 0; border-radius: 8px; padding: 8px 16px; cursor: pointer;
-  }
-  .trava button:disabled { opacity: 0.6; cursor: wait; }
-  .trava label.lembrar { flex-basis: 100%; color: var(--ink-2); font-size: 14px; }
-  .trava .erro { color: var(--down); font-size: 14px; margin: 10px 0 0; }
-
   .controles-scout { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
   .controles-scout .filtros { margin: 0; }
   .controles-scout label { color: var(--ink-2); font-size: 14px; }
   .controles-scout select {
     font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
     border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; margin-left: 4px;
-  }
-  .controles-scout .trancar {
-    margin-left: auto; font: inherit; font-size: 14px; color: var(--ink-2); background: transparent;
-    border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; cursor: pointer;
   }
   .adversarios { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr)); }
   .adv .topo { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -54,30 +37,20 @@
     <img src="fotos/time.webp" alt="">
     <div>
       <h1 id="titulo">SKTenis Tatuapellion · Treinos</h1>
-      <p class="sub" id="sub">Conteúdo criptografado: só abre com a senha.</p>
+      <p class="sub" id="sub">Carregando…</p>
     </div>
   </header>
   <nav class="abas">
     <a href="./">Elo</a>
-    <a href="desempenho.html">Desempenho SoloQ</a>
-    <a href="geral.html">Desempenho geral</a>
-    <a href="partidas.html">Últimas partidas</a>
+    <a href="desempenho.html">🔒 Desempenho SoloQ</a>
+    <a href="geral.html">🔒 Desempenho geral</a>
+    <a href="partidas.html">🔒 Últimas partidas</a>
     <a href="rodizio.html">Rodízio</a>
-    <a href="scout.html">Scout</a>
+    <a href="scout.html">🔒 Scout</a>
     <a href="treinos.html" aria-current="page">🔒 Treinos</a>
   </nav>
 
-  <section class="card trava" id="trava">
-    <h2>Digite a senha</h2>
-    <form id="form">
-      <input type="password" id="senha" autocomplete="current-password" aria-label="Senha" required>
-      <button type="submit" id="abrir">Abrir</button>
-      <label class="lembrar"><input type="checkbox" id="lembrar"> Manter aberto até fechar esta aba do navegador</label>
-    </form>
-    <p class="erro" id="erro" hidden></p>
-  </section>
-
-  <div id="aberto" hidden>
+  <div id="aberto">
     <div class="controles-scout">
       <div class="filtros" id="periodo" role="group" aria-label="Período">
         <button type="button" data-dias="7">Últimos 7 dias</button>
@@ -91,7 +64,6 @@
           <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option>
         </select>
       </label>
-      <button type="button" class="trancar" id="trancar">🔒 Trancar</button>
     </div>
 
     <section class="adversarios" id="atletas"></section>
@@ -105,10 +77,9 @@
 </main>
 
 <script>
-const CHAVE_SESSAO = "treinos-senha";
 const ROTA = { top: "Top", jungle: "Jungle", mid: "Mid", adc: "ADC", support: "Suporte" };
 const ORDEM = ["top", "jungle", "mid", "adc", "suporte", "support"];
-let pacote = null, treinos = null, scout = null, time = "", dias = 0, adversario = "", minPartidas = 1;
+let treinos = null, scout = null, time = "", dias = 0, adversario = "", minPartidas = 1;
 let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
 
 const el = (tag, props = {}, ...filhos) => {
@@ -118,7 +89,6 @@ const el = (tag, props = {}, ...filhos) => {
 };
 const fmt = (v, casas = 1) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
 const pct = (v, t) => (t ? `${Math.round(100 * v / t)}%` : "—");
-const bytes = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 const chaveNome = n => n.toLowerCase();
 const normal = n => (n || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -265,50 +235,6 @@ function preencherTimes() {
   preencherAdversarios();
 }
 
-async function decifrar(senha) {
-  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(senha), "PBKDF2", false, ["deriveKey"]);
-  const chave = await crypto.subtle.deriveKey(
-    { name: "PBKDF2", hash: "SHA-256", salt: bytes(pacote.sal), iterations: pacote.iteracoes },
-    base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
-  const claro = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytes(pacote.iv) }, chave, bytes(pacote.dados));
-  return JSON.parse(new TextDecoder().decode(claro));
-}
-
-async function tentar(senha, lembrar) {
-  const erro = document.getElementById("erro");
-  const botao = document.getElementById("abrir");
-  erro.hidden = true;
-  botao.disabled = true;
-  botao.textContent = "Abrindo…";
-  try {
-    treinos = await decifrar(senha);
-    if (lembrar) { try { sessionStorage.setItem(CHAVE_SESSAO, senha); } catch {} }
-    preencherTimes();
-    document.getElementById("trava").hidden = true;
-    document.getElementById("aberto").hidden = false;
-    render();
-  } catch {
-    erro.textContent = "Senha errada.";
-    erro.hidden = false;
-    try { sessionStorage.removeItem(CHAVE_SESSAO); } catch {}
-  } finally {
-    botao.disabled = false;
-    botao.textContent = "Abrir";
-  }
-}
-
-function trancar() {
-  try { sessionStorage.removeItem(CHAVE_SESSAO); } catch {}
-  treinos = null;
-  document.getElementById("atletas").replaceChildren();
-  document.getElementById("tab-jogos").replaceChildren();
-  document.getElementById("aberto").hidden = true;
-  document.getElementById("trava").hidden = false;
-  document.getElementById("sub").textContent = "Conteúdo criptografado: só abre com a senha.";
-  document.getElementById("senha").value = "";
-  document.getElementById("senha").focus();
-}
-
 async function dataDragon() {
   try {
     const versoes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json").then(r => r.json());
@@ -322,11 +248,6 @@ async function dataDragon() {
   } catch { /* sem ícones: mostra só os nomes */ }
 }
 
-document.getElementById("form").addEventListener("submit", e => {
-  e.preventDefault();
-  tentar(document.getElementById("senha").value, document.getElementById("lembrar").checked);
-});
-document.getElementById("trancar").addEventListener("click", trancar);
 document.querySelectorAll("#periodo button").forEach(b => b.addEventListener("click", () => {
   dias = Number(b.dataset.dias);
   document.querySelectorAll("#periodo button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
@@ -336,22 +257,14 @@ document.getElementById("time").addEventListener("change", e => { time = e.targe
 document.getElementById("adversario").addEventListener("change", e => { adversario = e.target.value; if (treinos) render(); });
 document.getElementById("min-partidas").addEventListener("change", e => { minPartidas = Number(e.target.value); if (treinos) render(); });
 
-Promise.all([
-  fetch("treinos.json", { cache: "no-store" }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }),
-  fetch("scout.json", { cache: "no-store" }).then(r => r.json()).catch(() => null),
-  dataDragon(),
-]).then(([p, d]) => {
-  pacote = p;
-  scout = d;
-  let salva = null;
-  try { salva = sessionStorage.getItem(CHAVE_SESSAO); } catch {}
-  if (salva) tentar(salva, true);
-}).catch(() => {
-  document.getElementById("form").hidden = true;
-  const erro = document.getElementById("erro");
-  erro.textContent = "A aba de treinos ainda não foi publicada.";
-  erro.hidden = false;
-});
+Promise.all([Trava.abrir(["treinos.json", "scout.json"]), dataDragon()])
+  .then(([[t, sc]]) => {
+    treinos = t;
+    scout = sc;
+    preencherTimes();
+    render();
+  })
+  .catch(() => {});
 </script>
 </body>
 </html>

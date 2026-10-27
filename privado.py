@@ -1,12 +1,16 @@
-"""Criptografa os dados da aba Treinos (scout dos treinos dos adversários).
+"""Criptografa os dados das abas privadas (Treinos, Scout, Desempenhos e Últimas partidas).
 
 Uso:
-    SENHA_PRIVADO=... python privado.py caminho/para/treinos.json
+    SENHA_PRIVADO=... python privado.py
 
-Os treinos ficam no repositório privado andryll/cblow-privado; o repositório deste site
-é público, então só a versão criptografada (site/treinos.json) é publicada, e ela nem
-vai para o git. AES-256-GCM com chave derivada da senha por PBKDF2-SHA256: a página
-decifra no navegador com a Web Crypto, sem mandar a senha para lugar nenhum.
+Os dados ficam no repositório privado andryll/cblow-privado (baixado em privado-fonte/);
+o repositório deste site é público, então só versões criptografadas vão para site/, e
+nem elas entram no git:
+- site/treinos.json  <- privado-fonte/treinos.json (escrito à mão a partir das prints)
+- site/partidas.json <- privado-saida/partidas.json (gerado pelo coletar.py)
+- site/scout.json    <- privado-saida/scout.json (gerado pelo coletar.py)
+AES-256-GCM com chave derivada da senha por PBKDF2-SHA256: as páginas decifram no
+navegador com a Web Crypto (site/trava.js), sem mandar a senha para lugar nenhum.
 
 Formato de treinos.json (campos numéricos podem ser null quando a print não mostra):
     {"jogos": [{"data": "AAAA-MM-DD", "time": "SUCATA IN BOX", "adversario": "VOS BRONZES",
@@ -20,7 +24,6 @@ import json
 import os
 import sys
 from datetime import datetime
-from pathlib import Path
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -28,7 +31,11 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 import coletar
 
-ARQ_SITE_TREINOS = coletar.RAIZ / "site" / "treinos.json"
+PUBLICAR = {
+    "treinos.json": coletar.PASTA_PRIVADA / "treinos.json",
+    "partidas.json": coletar.ARQ_SITE_PARTIDAS,
+    "scout.json": coletar.ARQ_SITE_SCOUT,
+}
 ITERACOES = 600_000  # recomendação da OWASP para PBKDF2-SHA256
 CAMPOS_JOGADOR = ["nome", "campeao", "abates", "mortes", "assistencias"]
 
@@ -73,12 +80,16 @@ def main():
     senha = os.environ.get("SENHA_PRIVADO", "")
     if not senha:
         sys.exit("Defina a variável de ambiente SENHA_PRIVADO.")
-    if len(sys.argv) < 2:
-        sys.exit("Uso: python privado.py caminho/para/treinos.json")
-    treinos = validar(json.loads(Path(sys.argv[1]).read_text(encoding="utf-8")))
-    treinos["gerado_em"] = datetime.now(coletar.BRASILIA).isoformat(timespec="minutes")
-    ARQ_SITE_TREINOS.write_text(json.dumps(criptografar(treinos, senha)), encoding="utf-8")
-    print(f"[treinos] {len(treinos['jogos'])} jogos de treino criptografados em {ARQ_SITE_TREINOS.name}")
+    for nome, origem in PUBLICAR.items():
+        if not origem.exists():
+            print(f"[privado] {origem} não existe: site/{nome} fica sem publicar")
+            continue
+        dados = json.loads(origem.read_text(encoding="utf-8"))
+        if nome == "treinos.json":
+            dados = validar(dados)
+            dados["gerado_em"] = datetime.now(coletar.BRASILIA).isoformat(timespec="minutes")
+        (coletar.RAIZ / "site" / nome).write_text(json.dumps(criptografar(dados, senha)), encoding="utf-8")
+        print(f"[privado] site/{nome} criptografado ({origem.stat().st_size // 1024} KB)")
 
 
 if __name__ == "__main__":

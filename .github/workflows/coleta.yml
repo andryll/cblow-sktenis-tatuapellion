@@ -35,7 +35,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install --quiet pillow   # só para reduzir fotos novas
+      - run: pip install --quiet pillow cryptography   # reduzir fotos novas; criptografar as abas privadas
+
+      # Partidas do time e dos adversários e os treinos ficam no repositório privado; este é público.
+      # O token precisa de Contents: Read and write no cblow-privado.
+      - name: Baixar o repositório privado
+        if: env.TEM_PRIVADO == 'true'
+        uses: actions/checkout@v5
+        with:
+          repository: andryll/cblow-privado
+          token: ${{ secrets.TOKEN_PRIVADO }}
+          path: privado-fonte
 
       - name: Reconstruir histórico pelas partidas
         if: ${{ inputs.reconstruir }}
@@ -43,7 +53,7 @@ jobs:
           RIOT_API_KEY: ${{ secrets.RIOT_API_KEY }}
         run: python reconstruir.py
 
-      - name: Buscar elo na API da Riot
+      - name: Buscar elo e partidas
         env:
           RIOT_API_KEY: ${{ secrets.RIOT_API_KEY }}
         run: python coletar.py
@@ -52,29 +62,30 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dados/ site/dados.json site/partidas.json site/scout.json site/rodizio.json site/fotos/
+          git add dados/ site/dados.json site/rodizio.json site/fotos/
           git diff --cached --quiet || git commit -m "Elo de $(TZ=America/Sao_Paulo date '+%F %H:%M')"
           git pull --rebase --quiet   # alguém pode ter subido código durante a coleta
           git push
 
-      # Aba Treinos: os dados vêm do repositório privado e só a versão criptografada é publicada
-      # (site/treinos.json não vai para o git).
-      - name: Baixar os dados da aba Treinos
+      - name: Salvar partidas no repositório privado
         if: env.TEM_PRIVADO == 'true'
-        uses: actions/checkout@v5
-        with:
-          repository: andryll/cblow-privado
-          token: ${{ secrets.TOKEN_PRIVADO }}
-          path: privado-fonte
+        working-directory: privado-fonte
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add partidas.json partidas_adversarios.json
+          git diff --cached --quiet || git commit -m "Partidas de $(TZ=America/Sao_Paulo date '+%F %H:%M')"
+          git pull --rebase --quiet   # os treinos podem ter sido editados durante a coleta
+          git push
 
-      - name: Criptografar a aba Treinos
+      # Só versões criptografadas vão para site/ (e nem elas entram no git).
+      - name: Criptografar as abas privadas
         if: env.TEM_PRIVADO == 'true'
         env:
           SENHA_PRIVADO: ${{ secrets.SENHA_PRIVADO }}
         run: |
-          pip install --quiet cryptography
-          python privado.py privado-fonte/treinos.json
-          rm -rf privado-fonte
+          python privado.py
+          rm -rf privado-fonte privado-saida
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

@@ -6,6 +6,7 @@
 <title>SKTenis Scout</title>
 <link rel="icon" type="image/webp" href="fotos/time.webp">
 <link rel="stylesheet" href="estilo.css">
+<script src="trava.js"></script>
 <style>
   .controles-scout { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
   .controles-scout .filtros { margin: 0; }
@@ -36,11 +37,11 @@
   </header>
   <nav class="abas">
     <a href="./">Elo</a>
-    <a href="desempenho.html">Desempenho SoloQ</a>
-    <a href="geral.html">Desempenho geral</a>
-    <a href="partidas.html">Últimas partidas</a>
+    <a href="desempenho.html">🔒 Desempenho SoloQ</a>
+    <a href="geral.html">🔒 Desempenho geral</a>
+    <a href="partidas.html">🔒 Últimas partidas</a>
     <a href="rodizio.html">Rodízio</a>
-    <a href="scout.html" aria-current="page">Scout</a>
+    <a href="scout.html" aria-current="page">🔒 Scout</a>
     <a href="treinos.html">🔒 Treinos</a>
   </nav>
 
@@ -177,8 +178,8 @@ document.getElementById("min-partidas").addEventListener("change", e => {
   if (scout?.proximo) render();
 });
 
-Promise.all([fetch("scout.json", { cache: "no-store" }).then(r => r.json()), dataDragon()])
-  .then(([s]) => {
+Promise.all([Trava.abrir(["scout.json"]), dataDragon()])
+  .then(([[s]]) => {
     scout = s;
     const sub = document.getElementById("sub");
     if (!s.proximo) { sub.textContent = "Nenhum próximo jogo marcado no CBLOW ainda."; return; }
@@ -196,7 +197,7 @@ Promise.all([fetch("scout.json", { cache: "no-store" }).then(r => r.json()), dat
     }
     render();
   })
-  .catch(() => { document.getElementById("sub").textContent = "Ainda não há dados do scout."; });
+  .catch(() => {});
 </script>
 </body>
 </html>

@@ -257,9 +257,9 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => joga
 
 Promise.all([
   fetch("dados.json", { cache: "no-store" }).then(r => r.json()),
-  fetch("partidas.json", { cache: "no-store" }).then(r => (r.ok ? r.json() : [])),
+  Trava.abrir(["partidas.json"]),
   dataDragon(),
-]).then(([d, p]) => {
+]).then(([d, [p]]) => {
   jogadores = d.jogadores;
   partidas = p;
   const quando = new Date(d.atualizado_em);
@@ -268,5 +268,6 @@ Promise.all([
     `${texto} desde 02/10 · atualizado em ${quando.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}`;
   render();
 }).catch(() => {
-  document.getElementById("sub").textContent = "Ainda não há dados.";
+  const sub = document.getElementById("sub");
+  if (sub.textContent === "Carregando…") sub.textContent = "Ainda não há dados.";
 });

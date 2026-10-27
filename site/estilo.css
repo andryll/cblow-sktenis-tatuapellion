@@ -142,3 +142,22 @@ section.card + section.card { margin-top: 16px; }
 }
 .controles { display: flex; gap: 14px; flex-wrap: wrap; }
 
+
+/* Abas privadas (trava.js) */
+.trava { max-width: 460px; margin-bottom: 16px; }
+.trava .explica { color: var(--ink-2); font-size: 14px; margin: 0 0 12px; }
+.trava form { display: flex; gap: 8px; flex-wrap: wrap; }
+.trava input[type="password"] {
+  flex: 1 1 200px; font: inherit; color: var(--ink); background: var(--page);
+  border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+}
+.trava button {
+  font: inherit; font-weight: 600; color: var(--page); background: var(--ink);
+  border: 0; border-radius: 8px; padding: 8px 16px; cursor: pointer;
+}
+.trava button:disabled { opacity: 0.6; cursor: wait; }
+.trava .erro { color: var(--down); font-size: 14px; margin: 10px 0 0; }
+.botao-trancar {
+  margin-left: auto; align-self: center; font: inherit; font-size: 13px; color: var(--ink-2);
+  background: transparent; border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; cursor: pointer;
+}

@@ -231,6 +231,8 @@ def main():
     chave = os.environ.get("RIOT_API_KEY", "").strip()
     jogadores = json.loads(coletar.ARQ_JOGADORES.read_text(encoding="utf-8"))
     agora = datetime.now(coletar.BRASILIA)
+    if not coletar.PASTA_PRIVADA.is_dir():
+        sys.exit(f"As partidas ficam no repositório privado: baixe andryll/cblow-privado em {coletar.PASTA_PRIVADA}.")
     linhas = coletar.ler_historico()
     partidas = coletar.ler_partidas()
     opgg = ler_opgg()
