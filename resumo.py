@@ -120,6 +120,24 @@ def forma_treinos(jogos):
                         for j in sorted(jogos, key=lambda j: j["data"], reverse=True)[:ULTIMOS_OFICIAIS]]}
 
 
+COLUNAS_PARTIDA = ["quando", "nick", "fila", "campeao", "rota", "resultado", "abates", "mortes", "assistencias",
+                   "cs", "dano", "ouro", "visao", "minutos"]
+
+
+def partidas_brutas(partidas, elenco, recente):
+    """Todas as partidas do elenco (solo, flex e campeonato) desde `recente`, uma linha cada, sem remakes.
+
+    Vai só para a análise, em colunas para gastar menos tokens; dano, ouro e visão são nulos no campeonato.
+    """
+    nick = {a["riot_id"].lower(): a["nome"] for a in elenco if a.get("riot_id")}
+    linhas = [[p["fim"][5:16].replace("T", " "), nick[p["riot_id"].lower()], p["fila"], p["campeao"], p["rota"],
+               "V" if p["vitoria"] else "D", p["abates"], p["mortes"], p["assistencias"], p["cs"],
+               p.get("dano"), p.get("ouro"), p.get("visao"), round(p["duracao"] / 60)]
+              for p in partidas
+              if p["riot_id"].lower() in nick and p["fim"][:10] >= recente and not p.get("remake")]
+    return {"colunas": COLUNAS_PARTIDA, "linhas": sorted(linhas)}
+
+
 def montar_time(nome, tag, elenco, partidas, treinos, rodizio, desde, recente):
     """elenco: [{nome, funcao, foto, riot_id}]; quem não tem Riot ID entra só com os treinos."""
     jogos = jogos_de_treino(treinos, nome, desde)
@@ -138,6 +156,9 @@ def montar_time(nome, tag, elenco, partidas, treinos, rodizio, desde, recente):
         "soloq": somar(soloq_todos),
         "treinos": forma_treinos(jogos),
         "atletas": atletas,
+        # Só para a análise: tudo o que foi coletado nos últimos RECENTE dias.
+        "_partidas": partidas_brutas(partidas, elenco, recente),
+        "_treinos": [j for j in jogos if j["data"] >= recente],
     }
 
 
@@ -168,6 +189,8 @@ carta que muda as regras do draft ou da partida. Por isso o elenco que joga muda
 do campeonato nem sempre são escolha livre. Treinos são scrims contra outros times, passados à mão das \
 prints. SoloQ e Flex são as filas ranqueadas de cada atleta nos últimos dias.
 
+Você recebe os números agregados (últimos 30 dias) e, de cada time, todas as partidas dos últimos 7 dias uma a uma (SoloQ, Flex e jogos oficiais, com campeão, rota, resultado, KDA, CS, dano, ouro, visão e duração; o campeonato não tem dano, ouro nem visão) e os treinos desses 7 dias. Use as partidas para ver o que os agregados escondem: sequências de vitórias ou derrotas, campeões novos, mudança de rota, jogos em que alguém foi muito bem ou muito mal, e se o desempenho está subindo ou caindo.
+
 Regras:
 - Use só os números recebidos. Não invente partidas, campeões nem resultados.
 - Diga quando a amostra é pequena (poucas partidas) em vez de tirar conclusão forte dela.
@@ -197,14 +220,16 @@ ESQUEMA = {
 
 
 def para_analise(resumo):
-    """Os números que vão para o Claude: sem fotos, com mais campeões por atleta que a página mostra."""
+    """O que vai para o Claude: os números da página (sem fotos, com mais campeões por atleta) e, de cada
+    time, todas as partidas e treinos dos últimos RECENTE dias com os números de cada jogo."""
     def time(t):
         return {**{k: t[k] for k in ("nome", "tag", "oficial", "soloq_recente", "soloq", "treinos")},
                 "atletas": [{"nick": a["nome"], "funcao": a["funcao"], "soloq_30_dias": a["soloq"],
                              "soloq_7_dias": a["recente"], "treinos_30_dias": a["treinos"],
                              "campeoes": [{k: c[k] for k in ("campeao", "n", "v", "d", "kda", "fontes")}
                                           for c in a["_campeoes"]]}
-                            for a in t["atletas"]]}
+                            for a in t["atletas"]],
+                f"partidas_{RECENTE}_dias": t["_partidas"], f"treinos_{RECENTE}_dias": t["_treinos"]}
     return {"proximo_jogo": resumo["proximo"], "janela_dias": JANELA, "nosso_time": time(resumo["nosso"]),
             "adversario": time(resumo["adversario"])}
 
@@ -225,7 +250,7 @@ def pedir_analise(dados):
         output_config={"effort": "high", "format": {"type": "json_schema", "schema": ESQUEMA}},
         system=SISTEMA,
         messages=[{"role": "user", "content": "Números do confronto (JSON):\n"
-                   + json.dumps(dados, ensure_ascii=False, indent=1)}],
+                   + json.dumps(dados, ensure_ascii=False, separators=(",", ":"))}],  # compacto: metade dos tokens
     )
     if resposta.stop_reason == "refusal":
         raise RuntimeError("o modelo recusou o pedido")
@@ -299,6 +324,7 @@ def main():
         })
         saida["analise"] = analise(saida, agora, adv["slug"], gatilho)
         for t in (saida["nosso"], saida["adversario"]):
+            del t["_partidas"], t["_treinos"]
             for a in t["atletas"]:
                 del a["_campeoes"]
         print(f"[resumo] {saida['nosso']['nome']} x {adv['nome']}: {len(saida['nosso']['atletas'])} e "
