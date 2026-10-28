@@ -26,7 +26,7 @@ RECENTE = 7          # dias da forma recente na SoloQ/Flex
 MIN_PARTIDAS = 3     # com menos que isso o campeão só entra se faltar opção, marcado como amostra pequena
 PRIOR = 4            # partidas fictícias a 50%: puxa o winrate de quem jogou pouco para o meio
 PESO_TREINO = 1      # quanto um jogo de treino vale em relação a uma partida de SoloQ/Flex
-MELHORES = 3
+MELHORES = 4
 ULTIMOS_OFICIAIS = 5
 
 MODELO = "claude-opus-5-5"

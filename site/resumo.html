@@ -12,7 +12,7 @@
   .analise p { margin: 0 0 10px; line-height: 1.5; }
   .analise h3 { font-size: 14px; color: var(--ink-2); margin: 14px 0 6px; }
   .analise ul { margin: 0; padding-left: 20px; line-height: 1.5; }
-  .bans { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+  .bans { display: grid; gap: 10px 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
   .ban { display: flex; gap: 10px; align-items: flex-start; }
   .ban img { width: 36px; height: 36px; border-radius: 6px; flex: none; }
   .ban .motivo { color: var(--ink-2); font-size: 14px; }
@@ -34,7 +34,10 @@
   .atleta .nome { font-weight: 600; }
   .atleta .numeros { color: var(--ink-2); font-size: 13px; }
   .atleta .funcao { color: var(--muted); font-size: 13px; margin-left: auto; align-self: flex-start; }
-  .campeoes { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px; font-size: 14px; }
+  /* Grade de 2 colunas (1 no celular), para os 4 campeões ficarem alinhados. */
+  .campeoes { display: grid; gap: 8px 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); margin-top: 8px; font-size: 14px; }
+  .campeoes .camp { align-items: flex-start; min-width: 0; }
+  .campeoes .camp > span { min-width: 0; }
   .campeoes .camp img { width: 28px; height: 28px; }
   .campeoes .det { color: var(--muted); font-size: 12px; }
 </style>
