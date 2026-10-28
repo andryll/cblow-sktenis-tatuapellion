@@ -1,5 +1,5 @@
 {
- "atualizado_em": "2026-10-28T11:09-03:00",
+ "atualizado_em": "2026-10-28T11:15-03:00",
  "jogadores": [
   {
    "nome": "KarlinRox",
@@ -282,7 +282,7 @@
   {
    "nome": "Ceyf",
    "riot_id": "SKTT Ceyf#CBLOW",
-   "funcao": "Top",
+   "funcao": "Top/Mid",
    "foto": "fotos/Ceyf.webp",
    "historico": [
     {
@@ -2228,7 +2228,7 @@
   {
    "nome": "Ynercias",
    "riot_id": "Ynercias#068",
-   "funcao": "Mid",
+   "funcao": "Top/Mid",
    "foto": "fotos/Ynercias.webp",
    "historico": [
     {
