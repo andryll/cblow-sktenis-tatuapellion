@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKTenis Resumo</title>
+<link rel="icon" type="image/webp" href="fotos/time.webp">
+<link rel="stylesheet" href="estilo.css">
+<script src="trava.js"></script>
+<style>
+  .analise h2 { font-size: 19px; margin-bottom: 10px; }
+  .analise p { margin: 0 0 10px; line-height: 1.5; }
+  .analise h3 { font-size: 14px; color: var(--ink-2); margin: 14px 0 6px; }
+  .analise ul { margin: 0; padding-left: 20px; line-height: 1.5; }
+  .bans { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+  .ban { display: flex; gap: 10px; align-items: flex-start; }
+  .ban img { width: 36px; height: 36px; border-radius: 6px; flex: none; }
+  .ban .motivo { color: var(--ink-2); font-size: 14px; }
+  .aviso { color: var(--down); font-size: 13px; margin: 0 0 10px; }
+  .lados { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); }
+  .lados > section.card + section.card { margin-top: 0; }  /* o estilo.css dá margem entre cards seguidos */
+  .lado h2 { font-size: 18px; }
+  .forma { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; margin-bottom: 14px; }
+  .forma dt { color: var(--ink-2); }
+  .forma dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .bolinhas { display: inline-flex; gap: 4px; margin-left: 8px; vertical-align: middle; }
+  .bolinha { width: 22px; height: 22px; border-radius: 50%; display: inline-grid; place-items: center;
+             font-size: 11px; font-weight: 700; color: #fff; }
+  .bolinha.v { background: var(--up); }
+  .bolinha.d { background: var(--down); }
+  .atleta { border-top: 1px solid var(--grid); padding: 10px 0; }
+  .atleta .topo { display: flex; align-items: center; gap: 10px; }
+  .atleta .foto { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex: none; background: var(--grid); }
+  .atleta .nome { font-weight: 600; }
+  .atleta .numeros { color: var(--ink-2); font-size: 13px; }
+  .atleta .funcao { color: var(--muted); font-size: 13px; margin-left: auto; align-self: flex-start; }
+  .campeoes { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px; font-size: 14px; }
+  .campeoes .camp img { width: 28px; height: 28px; }
+  .campeoes .det { color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="fotos/time.webp" alt="">
+    <div>
+      <h1 id="titulo">SKTenis Tatuapellion · Resumo</h1>
+      <p class="sub" id="sub">Carregando…</p>
+    </div>
+  </header>
+  <nav class="abas">
+    <a href="./">Elo</a>
+    <a href="desempenho.html">🔒 Desempenho SoloQ</a>
+    <a href="geral.html">🔒 Desempenho geral</a>
+    <a href="partidas.html">🔒 Últimas partidas</a>
+    <a href="rodizio.html">Rodízio</a>
+    <a href="scout.html">🔒 Scout</a>
+    <a href="treinos.html">🔒 Treinos</a>
+    <a href="resumo.html" aria-current="page">🔒 Resumo</a>
+  </nav>
+
+  <section class="card analise" id="analise" hidden></section>
+  <div class="lados" id="lados"></div>
+  <p class="nota" id="nota"></p>
+</main>
+
+<script>
+const FUNCAO = { top: "Top", jungle: "Jungle", mid: "Mid", adc: "ADC", support: "Suporte" };
+const FONTE = { solo: "SoloQ", flex: "Flex", treino: "Treino" };
+let dd = { versao: null, porId: {} };  // Data Dragon: ícones e nomes em português
+
+const el = (tag, props = {}, ...filhos) => {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...filhos);
+  return e;
+};
+const fmt = (v, casas = 2) => v.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+const pct = s => (s.n ? `${Math.round(100 * s.v / s.n)}%` : "—");
+const vd = s => `${s.v}V ${s.d}D`;
+const quando = iso => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+const dia = d => d.split("-").reverse().slice(0, 2).join("/");
+
+function campeao(nome) {
+  const c = dd.porId[nome.toLowerCase().replace(/[^a-z0-9]/g, "")];
+  return { nome: c?.name || nome, icone: c && dd.versao ? `https://ddragon.leagueoflegends.com/cdn/${dd.versao}/img/champion/${c.id}.png` : null };
+}
+
+function iconeCampeao(nome) {
+  const c = campeao(nome);
+  return c.icone ? el("img", { src: c.icone, alt: "", loading: "lazy" }) : el("span");
+}
+
+// A análise vem do Claude: só texto, montado com textContent.
+function renderAnalise(r) {
+  const sec = document.getElementById("analise");
+  const a = r.analise;
+  if (!a) {
+    sec.hidden = false;
+    sec.replaceChildren(el("h2", { textContent: "Análise" }),
+      el("p", { className: "muted", textContent: "A análise escrita sai toda sexta às 23h. Ainda não há uma para este adversário." }));
+    return;
+  }
+  const t = a.analise;
+  const lista = itens => el("ul", {}, ...itens.map(i => el("li", { textContent: i })));
+  sec.hidden = false;
+  sec.replaceChildren(
+    el("h2", { textContent: t.manchete }),
+    ...(a.desatualizada ? [el("p", { className: "aviso", textContent: "Entraram jogos ou treinos depois desta análise; a próxima sai na sexta às 23h." })] : []),
+    el("h3", { textContent: r.nosso.nome }), el("p", { textContent: t.nosso_time }),
+    el("h3", { textContent: r.adversario.nome }), el("p", { textContent: t.adversario }),
+    el("h3", { textContent: "O que deve decidir" }), lista(t.pontos_chave),
+    el("h3", { textContent: "Sugestões de ban" }),
+    el("div", { className: "bans" }, ...t.bans.map(b => el("div", { className: "ban" }, iconeCampeao(b.campeao),
+      el("div", {}, el("div", {}, el("strong", { textContent: campeao(b.campeao).nome }), ` · ${b.jogador}`),
+        el("div", { className: "motivo", textContent: b.motivo }))))),
+    el("h3", { textContent: "Recomendações" }), lista(t.recomendacoes),
+    el("p", { className: "nota", textContent: `Opinião escrita pelo Claude (${a.modelo}) em ${quando(a.gerado_em)}, a partir dos números desta aba.` }),
+  );
+}
+
+function bolinhas(jogos) {
+  return el("span", { className: "bolinhas" }, ...jogos.map(j => el("span", {
+    className: `bolinha ${j.vitoria ? "v" : "d"}`, textContent: j.vitoria ? "V" : "D",
+    title: `${j.data ? dia(j.data) : quando(j.quando)} · ${j.adversario || "?"}${j.carta ? ` · carta ${j.carta}` : ""}`,
+  })));
+}
+
+function linhaForma(rotulo, s, jogos, extra = "") {
+  const dd_ = el("dd", { textContent: s.v + s.d ? `${s.v}V ${s.d}D${extra}` : "nenhum" });
+  if (jogos?.length) dd_.append(bolinhas([...jogos].reverse()));
+  return [el("dt", { textContent: rotulo }), dd_];
+}
+
+function cardAtleta(a) {
+  const foto = el("img", { className: "foto", alt: "" });
+  if (a.foto) foto.src = a.foto;
+  const numeros = [];
+  if (a.soloq.n) numeros.push(`SoloQ/Flex: ${vd(a.soloq)} (${pct(a.soloq)}) · KDA ${fmt(a.soloq.kda)}`);
+  if (a.recente.n) numeros.push(`7 dias: ${vd(a.recente)}`);
+  if (a.treinos.n) numeros.push(`treinos: ${vd(a.treinos)}`);
+  const campeoes = a.melhores.length
+    ? a.melhores.map(c => el("span", { className: "camp" }, iconeCampeao(c.campeao),
+        el("span", {}, campeao(c.campeao).nome, el("br"),
+          el("span", { className: "det", textContent: `${vd(c)} · KDA ${fmt(c.kda)} · ` +
+            Object.entries(c.fontes).map(([f, n]) => `${FONTE[f] || f} ${n}`).join(", ") +
+            (c.amostra_pequena ? " · poucos jogos" : "") }))))
+    : [el("span", { className: "muted", textContent: `nenhum campeão com 2 jogos ou mais` })];
+  return el("div", { className: "atleta" },
+    el("div", { className: "topo" }, foto,
+      el("div", {}, el("div", { className: "nome", textContent: a.nome }), el("div", { className: "numeros", textContent: numeros.join(" · ") })),
+      el("div", { className: "funcao", textContent: FUNCAO[a.funcao] || a.funcao })),
+    el("div", { className: "campeoes" }, ...campeoes));
+}
+
+function cardLado(t, r) {
+  const s7 = t.soloq_recente;
+  return el("section", { className: "card lado" },
+    el("h2", { textContent: t.nome }),
+    el("dl", { className: "forma" },
+      ...linhaForma("Campeonato", t.oficial, t.oficial.ultimos),
+      ...linhaForma(`SoloQ/Flex ${r.recente_dias} dias`, s7, null, s7.n ? ` (${pct(s7)}) · KDA ${fmt(s7.kda)}` : ""),
+      ...linhaForma(`Treinos ${r.janela_dias} dias`, t.treinos, t.treinos.ultimos)),
+    ...t.atletas.map(cardAtleta));
+}
+
+async function dataDragon() {
+  try {
+    const versoes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json").then(r => r.json());
+    const dados = await fetch(`https://ddragon.leagueoflegends.com/cdn/${versoes[0]}/data/pt_BR/champion.json`).then(r => r.json());
+    dd = { versao: versoes[0], porId: Object.fromEntries(Object.values(dados.data).map(c => [c.id.toLowerCase(), c])) };
+  } catch { /* sem ícones: mostra só os nomes */ }
+}
+
+Promise.all([Trava.abrir(["resumo.json"]), dataDragon()])
+  .then(([[r]]) => {
+    const sub = document.getElementById("sub");
+    if (!r.proximo) { sub.textContent = "Nenhum próximo adversário no momento."; return; }
+    const p = r.proximo;
+    document.getElementById("titulo").textContent = `Resumo · ${r.nosso.nome} x ${p.time.nome}`;
+    sub.textContent = (p.quando ? `Próximo jogo: ${quando(p.quando)} · ${p.fase} · melhor de ${p.melhor_de}` : "Jogo ainda não marcado no CBLOW")
+      + ` · atualizado em ${quando(r.atualizado_em)}`;
+    renderAnalise(r);
+    document.getElementById("lados").replaceChildren(cardLado(r.nosso, r), cardLado(r.adversario, r));
+    document.getElementById("nota").textContent =
+      `Melhores campeões: SoloQ, Flex e treinos dos últimos ${r.janela_dias} dias, ordenados pelo winrate corrigido ` +
+      `(quem jogou pouco é puxado para 50%), com o KDA de desempate. Campeão com menos de ${r.min_partidas} jogos só ` +
+      `aparece para completar a lista. Os jogos do campeonato ficam de fora dos campeões, porque as cartas mudam o draft. ` +
+      `As bolinhas são os jogos mais recentes, do mais antigo para o mais novo.`;
+  })
+  .catch(() => {});
+</script>
+</body>
+</html>

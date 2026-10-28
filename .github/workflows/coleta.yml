@@ -9,6 +9,10 @@ on:
         description: "Reconstruir o histórico desde o início do campeonato"
         type: boolean
         default: false
+      analisar:
+        description: "Gerar a análise escrita da aba Resumo agora (normalmente só sexta às 23h)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -35,7 +39,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install --quiet pillow cryptography   # reduzir fotos novas; criptografar as abas privadas
+      - run: pip install --quiet pillow cryptography anthropic   # fotos novas; abas privadas; análise do Resumo
 
       # Partidas do time e dos adversários e os treinos ficam no repositório privado; este é público.
       # O token precisa de Contents: Read and write no cblow-privado.
@@ -58,6 +62,15 @@ jobs:
           RIOT_API_KEY: ${{ secrets.RIOT_API_KEY }}
         run: python coletar.py
 
+      # A análise escrita (Claude) só é pedida sexta às 23h ou pelo botão; sem o secret, sai só com os números.
+      - name: Resumo
+        if: env.TEM_PRIVADO == 'true'
+        continue-on-error: true   # um erro no resumo não pode impedir a publicação do site
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FORCAR_ANALISE: ${{ inputs.analisar }}
+        run: python resumo.py
+
       - name: Salvar histórico no repositório
         run: |
           git config user.name "github-actions[bot]"
@@ -73,7 +86,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add partidas.json partidas_adversarios.json
+          git add partidas.json partidas_adversarios.json $(ls analise.json 2>/dev/null)
           git diff --cached --quiet || git commit -m "Partidas de $(TZ=America/Sao_Paulo date '+%F %H:%M')"
           git pull --rebase --quiet   # os treinos podem ter sido editados durante a coleta
           git push

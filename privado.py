@@ -1,4 +1,4 @@
-"""Criptografa os dados das abas privadas (Treinos, Scout, Desempenhos e Últimas partidas).
+"""Criptografa os dados das abas privadas (Treinos, Scout, Resumo, Desempenhos e Últimas partidas).
 
 Uso:
     SENHA_PRIVADO=... python privado.py
@@ -9,6 +9,7 @@ nem elas entram no git:
 - site/treinos.json  <- privado-fonte/treinos.json (escrito à mão a partir das prints)
 - site/partidas.json <- privado-saida/partidas.json (gerado pelo coletar.py)
 - site/scout.json    <- privado-saida/scout.json (gerado pelo coletar.py)
+- site/resumo.json   <- privado-saida/resumo.json (gerado pelo resumo.py)
 AES-256-GCM com chave derivada da senha por PBKDF2-SHA256: as páginas decifram no
 navegador com a Web Crypto (site/trava.js), sem mandar a senha para lugar nenhum.
 
@@ -35,6 +36,7 @@ PUBLICAR = {
     "treinos.json": coletar.PASTA_PRIVADA / "treinos.json",
     "partidas.json": coletar.ARQ_SITE_PARTIDAS,
     "scout.json": coletar.ARQ_SITE_SCOUT,
+    "resumo.json": coletar.PASTA_SAIDA_PRIVADA / "resumo.json",
 }
 ITERACOES = 600_000  # recomendação da OWASP para PBKDF2-SHA256
 CAMPOS_JOGADOR = ["nome", "campeao", "abates", "mortes", "assistencias"]
