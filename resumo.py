@@ -178,43 +178,54 @@ def elenco_adversario(scout):
 
 # ---------------------------------------------------------------- análise pelo Claude
 
-SISTEMA = """Você é analista de League of Legends do SKTenis Tatuapellion no CBLOW, campeonato brasileiro \
-de low elo (Ferro e Bronze) do streamer Yoda. Escreve para o próprio time, antes do próximo jogo, uma \
-análise curta e com opinião: o que os números dizem sobre o momento do SKTenis e do adversário, onde está \
-a vantagem de cada lado e o que vale banir ou priorizar.
+SISTEMA = """Você é analista de League of Legends do SKTenis Tatuapellion no CBLOW, campeonato brasileiro de low elo (Ferro e Bronze) do streamer Yoda. Escreve para o próprio time, antes do próximo jogo, uma análise resumida e com opinião: pontos fortes e fracos de cada lado, o que banir, o que escolher e como jogar.
 
-Contexto do campeonato: as escalações seguem um rodízio obrigatório (todo mundo do elenco precisa jogar \
-antes de uma escalação se repetir, e o Pé de Chumbo joga sempre), e antes de cada jogo é sorteada uma \
-carta que muda as regras do draft ou da partida. Por isso o elenco que joga muda bastante e os campeões \
-do campeonato nem sempre são escolha livre. Treinos são scrims contra outros times, passados à mão das \
-prints. SoloQ e Flex são as filas ranqueadas de cada atleta nos últimos dias.
+Contexto do campeonato: as escalações seguem um rodízio obrigatório (todo mundo do elenco precisa jogar antes de uma escalação se repetir, e o Pé de Chumbo joga sempre), e antes de cada jogo é sorteada uma carta que muda as regras do draft ou da partida. Por isso o elenco que joga muda bastante e os campeões do campeonato nem sempre são escolha livre. Treinos são scrims contra outros times, passados à mão das prints. SoloQ e Flex são as filas ranqueadas de cada atleta nos últimos dias.
 
 Você recebe os números agregados (últimos 30 dias) e, de cada time, todas as partidas dos últimos 7 dias uma a uma (SoloQ, Flex e jogos oficiais, com campeão, rota, resultado, KDA, CS, dano, ouro, visão e duração; o campeonato não tem dano, ouro nem visão) e os treinos desses 7 dias. Use as partidas para ver o que os agregados escondem: sequências de vitórias ou derrotas, campeões novos, mudança de rota, jogos em que alguém foi muito bem ou muito mal, e se o desempenho está subindo ou caindo.
 
+O que escrever:
+- De cada time, de 2 a 4 pontos fortes e de 2 a 4 pontos fracos.
+- Exatamente 5 sugestões de ban, cada uma mirando um jogador do adversário.
+- Sugestões de pick para os atletas do SKTenis com mais chance de jogar: de 1 a 3 campeões para cada um.
+- De 2 a 3 sinergias: combinações de 2 ou 3 campeões do nosso pool que funcionam juntas.
+- De 3 a 5 recomendações de jogo (plano de partida, rotas para focar, o que evitar).
+
 Regras:
+- Seja breve: cada item em uma frase curta, com o número que sustenta a ideia quando houver.
 - Use só os números recebidos. Não invente partidas, campeões nem resultados.
-- Diga quando a amostra é pequena (poucas partidas) em vez de tirar conclusão forte dela.
+- Diga quando a amostra é pequena em vez de tirar conclusão forte dela.
 - Tenha opinião e seja direto, em português do Brasil informal, como quem fala com o time.
 - Chame os atletas pelo nick e os campeões pelo nome em português.
 - Texto puro, sem markdown."""
 
+_TEXTOS = {"type": "array", "items": {"type": "string"}}
+_LADO = {"type": "object", "properties": {"fortes": _TEXTOS, "fracos": _TEXTOS},
+         "required": ["fortes", "fracos"], "additionalProperties": False}
+_CAMPEOES = {"type": "array", "items": {"type": "string"}}
 ESQUEMA = {
     "type": "object",
     "properties": {
         "manchete": {"type": "string", "description": "Uma frase que resume o confronto."},
-        "nosso_time": {"type": "string", "description": "Um parágrafo sobre o momento do SKTenis."},
-        "adversario": {"type": "string", "description": "Um parágrafo sobre o momento do adversário."},
-        "pontos_chave": {"type": "array", "items": {"type": "string"},
-                         "description": "De 3 a 5 pontos que devem decidir o jogo."},
-        "bans": {"type": "array", "description": "De 2 a 4 sugestões de ban.",
+        "nosso_time": {**_LADO, "description": "Pontos fortes e fracos do SKTenis."},
+        "adversario": {**_LADO, "description": "Pontos fortes e fracos do adversário."},
+        "bans": {"type": "array", "description": "Exatamente 5 sugestões de ban.",
                  "items": {"type": "object",
                            "properties": {"campeao": {"type": "string"}, "jogador": {"type": "string"},
                                           "motivo": {"type": "string"}},
                            "required": ["campeao", "jogador", "motivo"], "additionalProperties": False}},
-        "recomendacoes": {"type": "array", "items": {"type": "string"},
-                          "description": "De 2 a 4 recomendações práticas para o SKTenis."},
+        "picks": {"type": "array", "description": "Picks sugeridos para cada atleta do SKTenis.",
+                  "items": {"type": "object",
+                            "properties": {"jogador": {"type": "string"}, "campeoes": _CAMPEOES,
+                                           "motivo": {"type": "string"}},
+                            "required": ["jogador", "campeoes", "motivo"], "additionalProperties": False}},
+        "sinergias": {"type": "array", "description": "De 2 a 3 combinações de campeões do nosso pool.",
+                      "items": {"type": "object",
+                                "properties": {"campeoes": _CAMPEOES, "motivo": {"type": "string"}},
+                                "required": ["campeoes", "motivo"], "additionalProperties": False}},
+        "recomendacoes": {**_TEXTOS, "description": "De 3 a 5 recomendações de jogo para o SKTenis."},
     },
-    "required": ["manchete", "nosso_time", "adversario", "pontos_chave", "bans", "recomendacoes"],
+    "required": ["manchete", "nosso_time", "adversario", "bans", "picks", "sinergias", "recomendacoes"],
     "additionalProperties": False,
 }
 

@@ -17,6 +17,13 @@
   .ban img { width: 36px; height: 36px; border-radius: 6px; flex: none; }
   .ban .motivo { color: var(--ink-2); font-size: 14px; }
   .aviso { color: var(--down); font-size: 13px; margin: 0 0 10px; }
+  .lados-analise { display: grid; gap: 4px 24px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
+  .lado-analise ul { list-style: none; padding-left: 0; }
+  .lado-analise li { padding-left: 20px; position: relative; margin-bottom: 4px; }
+  .fortes li::before { content: "▲"; color: var(--up); position: absolute; left: 0; font-size: 12px; top: 3px; }
+  .fracos li::before { content: "▼"; color: var(--down); position: absolute; left: 0; font-size: 12px; top: 3px; }
+  .analise .fracos { margin-top: 6px; }
+  .icones { display: inline-flex; gap: 3px; flex: none; }
   .lados { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); }
   .lados > section.card + section.card { margin-top: 0; }  /* o estilo.css dá margem entre cards seguidos */
   .lado h2 { font-size: 18px; }
@@ -84,7 +91,7 @@ const quando = iso => new Date(iso).toLocaleString("pt-BR", { dateStyle: "short"
 const dia = d => d.split("-").reverse().slice(0, 2).join("/");
 
 function campeao(nome) {
-  const c = dd.porId[nome.toLowerCase().replace(/[^a-z0-9]/g, "")];
+  const c = dd.porId[nome.toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "")];
   return { nome: c?.name || nome, icone: c && dd.versao ? `https://ddragon.leagueoflegends.com/cdn/${dd.versao}/img/champion/${c.id}.png` : null };
 }
 
@@ -105,19 +112,32 @@ function renderAnalise(r) {
   }
   const t = a.analise;
   const lista = itens => el("ul", {}, ...itens.map(i => el("li", { textContent: i })));
+  const icones = nomes => el("span", { className: "icones" }, ...nomes.map(iconeCampeao));
+  const nomes = ns => ns.map(n => campeao(n).nome).join(" + ");
+  // Análises antigas (até 30/10) eram em parágrafos.
+  const lado = (nome, l) => el("div", { className: "lado-analise" }, el("h3", { textContent: nome }),
+    ...(typeof l === "string" ? [el("p", { textContent: l })] : [
+      el("ul", { className: "fortes" }, ...l.fortes.map(i => el("li", { textContent: i }))),
+      el("ul", { className: "fracos" }, ...l.fracos.map(i => el("li", { textContent: i })))]));
   sec.hidden = false;
   sec.replaceChildren(
     el("h2", { textContent: t.manchete }),
     ...(a.desatualizada ? [el("p", { className: "aviso", textContent: "Entraram jogos ou treinos depois desta análise; a próxima sai na sexta às 23h." })] : []),
-    el("h3", { textContent: r.nosso.nome }), el("p", { textContent: t.nosso_time }),
-    el("h3", { textContent: r.adversario.nome }), el("p", { textContent: t.adversario }),
-    el("h3", { textContent: "O que deve decidir" }), lista(t.pontos_chave),
+    el("div", { className: "lados-analise" }, lado(r.nosso.nome, t.nosso_time), lado(r.adversario.nome, t.adversario)),
+    ...(t.pontos_chave ? [el("h3", { textContent: "O que deve decidir" }), lista(t.pontos_chave)] : []),
     el("h3", { textContent: "Sugestões de ban" }),
     el("div", { className: "bans" }, ...t.bans.map(b => el("div", { className: "ban" }, iconeCampeao(b.campeao),
       el("div", {}, el("div", {}, el("strong", { textContent: campeao(b.campeao).nome }), ` · ${b.jogador}`),
         el("div", { className: "motivo", textContent: b.motivo }))))),
-    el("h3", { textContent: "Recomendações" }), lista(t.recomendacoes),
-    el("p", { className: "nota", textContent: `Opinião escrita pelo Claude (${a.modelo}) em ${quando(a.gerado_em)}, a partir dos números desta aba.` }),
+    ...(t.picks ? [el("h3", { textContent: "Picks sugeridos" }),
+      el("div", { className: "bans" }, ...t.picks.map(p => el("div", { className: "ban" }, icones(p.campeoes),
+        el("div", {}, el("div", {}, el("strong", { textContent: p.jogador }), ` · ${nomes(p.campeoes)}`),
+          el("div", { className: "motivo", textContent: p.motivo })))))] : []),
+    ...(t.sinergias ? [el("h3", { textContent: "Sinergias" }),
+      el("div", { className: "bans" }, ...t.sinergias.map(x => el("div", { className: "ban" }, icones(x.campeoes),
+        el("div", {}, el("strong", { textContent: nomes(x.campeoes) }), el("div", { className: "motivo", textContent: x.motivo })))))] : []),
+    el("h3", { textContent: "Recomendações de jogo" }), lista(t.recomendacoes),
+    el("p", { className: "nota", textContent: `Opinião escrita pelo Claude (${a.modelo}) em ${quando(a.gerado_em)}, a partir dos números desta aba e das partidas dos últimos 7 dias.` }),
   );
 }
 
@@ -170,7 +190,10 @@ async function dataDragon() {
   try {
     const versoes = await fetch("https://ddragon.leagueoflegends.com/api/versions.json").then(r => r.json());
     const dados = await fetch(`https://ddragon.leagueoflegends.com/cdn/${versoes[0]}/data/pt_BR/champion.json`).then(r => r.json());
-    dd = { versao: versoes[0], porId: Object.fromEntries(Object.values(dados.data).map(c => [c.id.toLowerCase(), c])) };
+    const chave = n => n.toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g, "");
+    const porId = {};
+    for (const c of Object.values(dados.data)) { porId[chave(c.name)] = c; porId[c.id.toLowerCase()] = c; }
+    dd = { versao: versoes[0], porId };
   } catch { /* sem ícones: mostra só os nomes */ }
 }
 
