@@ -205,15 +205,29 @@ Promise.all([Trava.abrir(["resumo.json"]), dataDragon()])
     document.getElementById("titulo").textContent = `Resumo · ${r.nosso.nome} x ${p.time.nome}`;
     sub.textContent = (p.quando ? `Próximo jogo: ${quando(p.quando)} · ${p.fase} · melhor de ${p.melhor_de}` : "Jogo ainda não marcado no CBLOW")
       + ` · atualizado em ${quando(r.atualizado_em)}`;
-    renderAnalise(r);
+    // Os times primeiro: um erro na análise (formato que a página não conhece) não pode apagar a aba toda.
     document.getElementById("lados").replaceChildren(cardLado(r.nosso, r), cardLado(r.adversario, r));
+    try {
+      renderAnalise(r);
+    } catch (e) {
+      console.error(e);
+      const sec = document.getElementById("analise");
+      sec.hidden = false;
+      sec.replaceChildren(el("h2", { textContent: "Análise" }),
+        el("p", { className: "aviso", textContent: "Não deu para mostrar a análise. Recarregue a página (Ctrl+F5); se continuar, avise." }));
+    }
     document.getElementById("nota").textContent =
       `Melhores campeões: SoloQ, Flex e treinos dos últimos ${r.janela_dias} dias, ordenados pelo winrate corrigido ` +
       `(quem jogou pouco é puxado para 50%), com o KDA de desempate. Campeão com menos de ${r.min_partidas} jogos só ` +
       `aparece para completar a lista. Os jogos do campeonato ficam de fora dos campeões, porque as cartas mudam o draft. ` +
       `As bolinhas são os jogos mais recentes, do mais antigo para o mais novo.`;
   })
-  .catch(() => {});
+  .catch(e => {
+    console.error(e);
+    // Arquivo que não abriu: a trava já avisou no subtítulo. Qualquer outro erro é ao montar a página.
+    const sub = document.getElementById("sub");
+    if (sub.textContent !== "Esta aba ainda não foi publicada.") sub.textContent = "Erro ao montar a aba. Recarregue a página (Ctrl+F5); se continuar, avise.";
+  });
 </script>
 </body>
 </html>
