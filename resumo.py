@@ -20,6 +20,7 @@ import coletar
 ARQ_RESUMO = coletar.PASTA_SAIDA_PRIVADA / "resumo.json"
 ARQ_ANALISE = coletar.PASTA_PRIVADA / "analise.json"
 ARQ_TREINOS = coletar.PASTA_PRIVADA / "treinos.json"
+ARQ_OBSERVACOES = coletar.PASTA_PRIVADA / "observacoes.json"  # o que o time sabe e os números não mostram
 
 JANELA = 30          # dias de SoloQ, Flex e treinos que entram nos melhores campeões
 RECENTE = 7          # dias da forma recente na SoloQ/Flex
@@ -191,6 +192,8 @@ O que escrever:
 - De 2 a 3 sinergias: combinações de 2 ou 3 campeões do nosso pool que funcionam juntas.
 - De 3 a 5 recomendações de jogo (plano de partida, rotas para focar, o que evitar).
 
+Observações do time: quando vierem "observacoes_do_time", são informações de quem acompanha o time por dentro e valem mais que os números. Leve todas em conta e não contradiga nenhuma (por exemplo, não sugira evitar um campeão que uma observação diz ser o melhor de alguém).
+
 Regras:
 - Seja breve: cada item em uma frase curta, com o número que sustenta a ideia quando houver.
 - Escreva os números no formato brasileiro, com vírgula decimal (KDA 3,33).
@@ -242,8 +245,10 @@ def para_analise(resumo):
                                           for c in a["_campeoes"]]}
                             for a in t["atletas"]],
                 f"partidas_{RECENTE}_dias": t["_partidas"], f"treinos_{RECENTE}_dias": t["_treinos"]}
-    return {"proximo_jogo": resumo["proximo"], "janela_dias": JANELA, "nosso_time": time(resumo["nosso"]),
-            "adversario": time(resumo["adversario"])}
+    observacoes = (json.loads(ARQ_OBSERVACOES.read_text(encoding="utf-8")).get("observacoes", [])
+                   if ARQ_OBSERVACOES.exists() else [])
+    return {"proximo_jogo": resumo["proximo"], "janela_dias": JANELA, "observacoes_do_time": observacoes,
+            "nosso_time": time(resumo["nosso"]), "adversario": time(resumo["adversario"])}
 
 
 def impressao(dados):
