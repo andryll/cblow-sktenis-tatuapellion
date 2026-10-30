@@ -193,6 +193,7 @@ O que escrever:
 
 Regras:
 - Seja breve: cada item em uma frase curta, com o número que sustenta a ideia quando houver.
+- Escreva os números no formato brasileiro, com vírgula decimal (KDA 3,33).
 - Use só os números recebidos. Não invente partidas, campeões nem resultados.
 - Diga quando a amostra é pequena em vez de tirar conclusão forte dela.
 - Tenha opinião e seja direto, em português do Brasil informal, como quem fala com o time.
@@ -279,7 +280,7 @@ def hora_da_analise(agora):
 
 
 def analise(resumo, agora, adversario, gatilho):
-    """A análise guardada; uma nova só sai na hora marcada, uma vez por dia.
+    """A análise guardada; uma nova só sai na hora marcada (uma vez, mesmo se a coleta rodar duas vezes nessa hora).
 
     Ela continua aparecendo até a próxima, se o adversário for o mesmo, marcada como desatualizada
     quando entrou treino ou jogo oficial depois dela.
@@ -287,8 +288,9 @@ def analise(resumo, agora, adversario, gatilho):
     guardada = json.loads(ARQ_ANALISE.read_text(encoding="utf-8")) if ARQ_ANALISE.exists() else None
     anterior = ({**guardada, "desatualizada": guardada["gatilho"] != gatilho}
                 if guardada and guardada.get("adversario") == adversario else None)
-    ja_hoje = guardada and guardada["gerado_em"][:10] == agora.date().isoformat() and anterior
-    if not hora_da_analise(agora) or (ja_hoje and os.environ.get("FORCAR_ANALISE") != "true"):
+    # Uma pedida na mão mais cedo não impede a das 23h.
+    ja_nesta_hora = anterior and guardada["gerado_em"][:13] == agora.isoformat(timespec="hours")[:13]
+    if not hora_da_analise(agora) or (ja_nesta_hora and os.environ.get("FORCAR_ANALISE") != "true"):
         return anterior
     if not os.environ.get("ANTHROPIC_API_KEY", "").strip():
         print("[resumo] sem ANTHROPIC_API_KEY: a aba sai sem a análise escrita nova"
