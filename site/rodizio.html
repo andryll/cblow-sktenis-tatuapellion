@@ -121,7 +121,10 @@ function icone(nome) {
 // - Quem entra no elenco depois (rodizio.json) passa a faltar a partir da data de entrada.
 // - Quem saiu do time conta até o último jogo que fez (o CBLOW não informa a data de saída).
 // - Quando o último que faltava joga, o ciclo fecha; o próximo ciclo começa do zero no jogo seguinte.
-// - No primeiro jogo dos playoffs a fila zera (§2.5).
+// - No primeiro jogo dos playoffs a fila zera (§2.5); se o próximo jogo é o primeiro deles, ela já sai zerada.
+// No CBLOW os playoffs são a "Escalada" e a "Grande Final"; o "Desempate" ainda é da fase de grupos.
+const ehPlayoff = fase => /playoff|escalada|final/i.test(fase || "");
+
 function calcular(t) {
   const nick = Object.fromEntries([...t.elenco.map(p => [p.slug, p.nick]),
     ...t.jogos.flatMap(j => j.escalacao.map(e => [e.slug, e.nick]))]);
@@ -141,7 +144,7 @@ function calcular(t) {
 
   t.jogos.forEach((j, i) => {
     atualizar(diaBrasilia(j.quando), i);
-    if (/playoff/i.test(j.fase) && !playoffs) {
+    if (ehPlayoff(j.fase) && !playoffs) {
       playoffs = true;
       if (inicio) ciclo++;
       conhecidos.forEach(s => pendentes.add(s));
@@ -182,6 +185,11 @@ function calcular(t) {
     }
   });
   atualizar(diaBrasilia(new Date().toISOString()), t.jogos.length);
+  if (ehPlayoff(t.proximo?.fase) && !playoffs) {
+    if (inicio) ciclo++;
+    conhecidos.forEach(s => pendentes.add(s));
+    inicio = null;
+  }
   return { pendentes, ciclo, inicio };
 }
 

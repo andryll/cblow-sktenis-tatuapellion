@@ -224,6 +224,11 @@ def baixar_json(url):
         return json.load(resp)
 
 
+def series_cblow():
+    """As séries do CBLOW com os dois times definidos: a chave dos playoffs traz jogos com time ainda vazio."""
+    return [m for m in baixar_json(f"{API_CBLOW}/matches") if m.get("team1") and m.get("team2")]
+
+
 def ids_campeoes():
     """Nome de exibição ou id do Data Dragon, normalizado -> id ("Miss Fortune" -> "MissFortune", "Wukong" -> "MonkeyKing")."""
     versao = baixar_json("https://ddragon.leagueoflegends.com/api/versions.json")[0]
@@ -247,7 +252,7 @@ def atualizar_campeonato(jogadores, partidas, time_slug=TIME_CBLOW):
     """
     por_nick = {j["nome"].lower(): j for j in jogadores}
     conhecidas = {p["id"].split("_")[1] for p in partidas if p["fila"] == "campeonato"}
-    series = [m for m in baixar_json(f"{API_CBLOW}/matches")
+    series = [m for m in series_cblow()
               if m["status"] == "finalizada" and time_slug in (m["team1"]["slug"], m["team2"]["slug"])
               and str(m["id"]) not in conhecidas]
     if not series:
@@ -299,7 +304,7 @@ def proximo_adversario():
     Com um slug em proximo_adversario.json, o scout fica nesse time; a série é o próximo
     jogo contra ele, ou None se o CBLOW ainda não marcou.
     """
-    todas = baixar_json(f"{API_CBLOW}/matches")
+    todas = series_cblow()
     series = [m for m in todas if m["status"] != "finalizada" and TIME_CBLOW in (m["team1"]["slug"], m["team2"]["slug"])]
     forcado = (json.loads(ARQ_PROXIMO_ADVERSARIO.read_text(encoding="utf-8")).get("slug")
                if ARQ_PROXIMO_ADVERSARIO.exists() else None)
@@ -401,7 +406,7 @@ def gerar_rodizio(agora):
         return f"fotos/{local.name}" if local.exists() else p.get("avatarUrl") or ""
 
     jogadores = baixar_json(f"{API_CBLOW}/players")
-    todas = sorted(baixar_json(f"{API_CBLOW}/matches"), key=lambda m: m["scheduledAt"])
+    todas = sorted(series_cblow(), key=lambda m: m["scheduledAt"])
     detalhes = series_finalizadas([m["id"] for m in todas if m["status"] == "finalizada"])
     campeoes = ids_campeoes()
 
