@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PYTHONUNBUFFERED: "1"   # o log aparece em tempo real em vez de só no fim do passo
-      TEM_PRIVADO: ${{ secrets.TOKEN_PRIVADO != '' && secrets.SENHA_PRIVADO != '' }}
+      TEM_PRIVADO: ${{ secrets.TOKEN_PRIVADO != '' }}
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

@@ -33,11 +33,11 @@
     return { nav, partes: irmaos.slice(irmaos.indexOf(nav) + 1) };
   }
 
-  function mostrarConteudo() {
+  function mostrarConteudo(trancada = true) {
     const { nav, partes } = conteudo();
     partes.forEach(p => { if (p.dataset.travaEscondido) { p.hidden = false; delete p.dataset.travaEscondido; } });
     document.getElementById("trava")?.remove();
-    if (!document.getElementById("trancar")) {
+    if (trancada && !document.getElementById("trancar")) {
       const botao = el("button", { type: "button", id: "trancar", className: "botao-trancar", textContent: "🔒 Trancar" });
       botao.addEventListener("click", () => { esquecer(); location.reload(); });
       nav.append(botao);
@@ -94,8 +94,8 @@
       avisar("Esta aba ainda não foi publicada.");
       throw e;
     }
-    // Arquivo sem criptografia (rodando o site localmente): abre direto.
-    if (!brutos.some(cifrado)) { mostrarConteudo(); return brutos; }
+    // Arquivo sem criptografia (as abas estão abertas desde 01/11, ou o site roda localmente): abre direto.
+    if (!brutos.some(cifrado)) { mostrarConteudo(false); return brutos; }
 
     const decifrarTodos = senha => Promise.all(brutos.map(b => (cifrado(b) ? decifrar(b, senha) : b)));
     const salva = lerSenha();

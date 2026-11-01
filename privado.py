@@ -38,6 +38,9 @@ PUBLICAR = {
     "scout.json": coletar.ARQ_SITE_SCOUT,
     "resumo.json": coletar.PASTA_SAIDA_PRIVADA / "resumo.json",
 }
+# Desde 01/11/2026 as abas ficam abertas: os arquivos vão para site/ sem criptografia. Para voltar a
+# trancar, mude para True (precisa do secret SENHA_PRIVADO); as páginas abrem os dois formatos.
+CRIPTOGRAFAR = False
 ITERACOES = 600_000  # recomendação da OWASP para PBKDF2-SHA256
 CAMPOS_JOGADOR = ["nome", "campeao", "abates", "mortes", "assistencias"]
 
@@ -80,7 +83,7 @@ def criptografar(dados, senha):
 
 def main():
     senha = os.environ.get("SENHA_PRIVADO", "")
-    if not senha:
+    if CRIPTOGRAFAR and not senha:
         sys.exit("Defina a variável de ambiente SENHA_PRIVADO.")
     for nome, origem in PUBLICAR.items():
         if not origem.exists():
@@ -90,8 +93,10 @@ def main():
         if nome == "treinos.json":
             dados = validar(dados)
             dados["gerado_em"] = datetime.now(coletar.BRASILIA).isoformat(timespec="minutes")
-        (coletar.RAIZ / "site" / nome).write_text(json.dumps(criptografar(dados, senha)), encoding="utf-8")
-        print(f"[privado] site/{nome} criptografado ({origem.stat().st_size // 1024} KB)")
+        saida = criptografar(dados, senha) if CRIPTOGRAFAR else dados
+        (coletar.RAIZ / "site" / nome).write_text(json.dumps(saida, ensure_ascii=False), encoding="utf-8")
+        print(f"[privado] site/{nome} {'criptografado' if CRIPTOGRAFAR else 'publicado aberto'} "
+              f"({origem.stat().st_size // 1024} KB)")
 
 
 if __name__ == "__main__":
