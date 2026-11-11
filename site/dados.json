@@ -1,5 +1,5 @@
 {
- "atualizado_em": "2026-11-10T20:00-03:00",
+ "atualizado_em": "2026-11-10T21:00-03:00",
  "jogadores": [
   {
    "nome": "KarlinRox",
@@ -401,10 +401,10 @@
      "data": "2026-11-10",
      "tier": "IRON",
      "rank": "IV",
-     "lp": 7,
-     "vitorias": 125,
+     "lp": 27,
+     "vitorias": 126,
      "derrotas": 176,
-     "pontos": 7,
+     "pontos": 27,
      "estimado": false
     }
    ]
@@ -2441,10 +2441,10 @@
      "data": "2026-11-10",
      "tier": "BRONZE",
      "rank": "III",
-     "lp": 25,
-     "vitorias": 122,
+     "lp": 46,
+     "vitorias": 123,
      "derrotas": 131,
-     "pontos": 525,
+     "pontos": 546,
      "estimado": false
     }
    ]
@@ -3664,11 +3664,11 @@
     {
      "data": "2026-11-10",
      "tier": "BRONZE",
-     "rank": "II",
-     "lp": 9,
+     "rank": "III",
+     "lp": 89,
      "vitorias": 142,
-     "derrotas": 147,
-     "pontos": 609,
+     "derrotas": 148,
+     "pontos": 589,
      "estimado": false
     }
    ]
