@@ -1,5 +1,5 @@
 {
- "atualizado_em": "2026-11-13T23:00-03:00",
+ "atualizado_em": "2026-11-14T00:00-03:00",
  "jogadores": [
   {
    "nome": "KarlinRox",
@@ -429,6 +429,16 @@
     },
     {
      "data": "2026-11-13",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 18,
+     "vitorias": 134,
+     "derrotas": 181,
+     "pontos": 118,
+     "estimado": false
+    },
+    {
+     "data": "2026-11-14",
      "tier": "IRON",
      "rank": "III",
      "lp": 18,
@@ -874,6 +884,16 @@
      "derrotas": 130,
      "pontos": 195,
      "estimado": false
+    },
+    {
+     "data": "2026-11-14",
+     "tier": "IRON",
+     "rank": "III",
+     "lp": 95,
+     "vitorias": 106,
+     "derrotas": 130,
+     "pontos": 195,
+     "estimado": false
     }
    ]
   },
@@ -1305,6 +1325,16 @@
     },
     {
      "data": "2026-11-13",
+     "tier": "IRON",
+     "rank": "II",
+     "lp": 0,
+     "vitorias": 355,
+     "derrotas": 468,
+     "pontos": 200,
+     "estimado": false
+    },
+    {
+     "data": "2026-11-14",
      "tier": "IRON",
      "rank": "II",
      "lp": 0,
@@ -1750,6 +1780,16 @@
      "derrotas": 203,
      "pontos": 60,
      "estimado": false
+    },
+    {
+     "data": "2026-11-14",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 60,
+     "vitorias": 144,
+     "derrotas": 203,
+     "pontos": 60,
+     "estimado": false
     }
    ]
   },
@@ -2181,6 +2221,16 @@
     },
     {
      "data": "2026-11-13",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 18,
+     "vitorias": 75,
+     "derrotas": 119,
+     "pontos": 18,
+     "estimado": false
+    },
+    {
+     "data": "2026-11-14",
      "tier": "IRON",
      "rank": "IV",
      "lp": 18,
@@ -2626,6 +2676,16 @@
      "derrotas": 132,
      "pontos": 590,
      "estimado": false
+    },
+    {
+     "data": "2026-11-14",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 90,
+     "vitorias": 126,
+     "derrotas": 132,
+     "pontos": 590,
+     "estimado": false
     }
    ]
   },
@@ -3057,6 +3117,16 @@
     },
     {
      "data": "2026-11-13",
+     "tier": "IRON",
+     "rank": "IV",
+     "lp": 0,
+     "vitorias": 112,
+     "derrotas": 149,
+     "pontos": 0,
+     "estimado": false
+    },
+    {
+     "data": "2026-11-14",
      "tier": "IRON",
      "rank": "IV",
      "lp": 0,
@@ -3502,6 +3572,16 @@
      "derrotas": 151,
      "pontos": 549,
      "estimado": false
+    },
+    {
+     "data": "2026-11-14",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 49,
+     "vitorias": 131,
+     "derrotas": 151,
+     "pontos": 549,
+     "estimado": false
     }
    ]
   },
@@ -3939,6 +4019,16 @@
      "vitorias": 148,
      "derrotas": 158,
      "pontos": 503,
+     "estimado": false
+    },
+    {
+     "data": "2026-11-14",
+     "tier": "BRONZE",
+     "rank": "III",
+     "lp": 22,
+     "vitorias": 149,
+     "derrotas": 158,
+     "pontos": 522,
      "estimado": false
     }
    ]
